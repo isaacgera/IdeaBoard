@@ -307,7 +307,7 @@ function dashHoverEnd() {
 
 function dashClearOnOutsideClick(e) {
   if (!state.dashHighlight && !state.dashLocked) return;
-  var dashboard = document.getElementById('dashboard-bar');
+  var dashboard = document.getElementById('dashboard-container');
   if (dashboard && !dashboard.contains(e.target)) {
     state.dashHighlight = null;
     state.dashLocked = false;
@@ -399,11 +399,14 @@ function applyDashHighlight() {
 // RENDERING
 // ============================================================
 function render() {
-  var dashHtml = renderDashboard();
+  // Render dashboard into its own container (above toolbar)
+  var dashContainer = document.getElementById('dashboard-container');
+  if (dashContainer) dashContainer.innerHTML = renderDashboard();
+
   var contentHtml = '';
   if (state.currentView === 'kanban') { contentHtml = renderKanbanHtml(); }
   else { contentHtml = renderListHtml(); }
-  document.getElementById('board-content').innerHTML = dashHtml + contentHtml;
+  document.getElementById('board-content').innerHTML = contentHtml;
 }
 
 function renderKanbanHtml() {

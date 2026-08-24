@@ -27,9 +27,14 @@
 body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; transition: background .3s, color .3s; }
 
 .app { max-width: 1400px; margin: 0 auto; padding: 1rem; }
-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; padding: .75rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
-header h1 { font-size: 1.4rem; color: var(--primary); display: flex; align-items: center; gap: .5rem; }
-header h1 .subtitle { font-size: .75rem; color: var(--text-light); font-weight: 400; }
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; padding: .8rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--accent), var(--status-done)); }
+.header-left { display: flex; align-items: center; }
+.header-brand { display: flex; align-items: center; gap: .7rem; }
+.brand-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 3px 10px rgba(99,102,241,.25); }
+.brand-icon svg { stroke: #fff; }
+header h1 { font-size: 1.3rem; color: var(--primary); line-height: 1.2; margin: 0; }
+header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400; display: block; letter-spacing: .3px; }
 
 .btn { padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: .8rem; font-weight: 500; transition: all .2s; display: inline-flex; align-items: center; gap: .3rem; }
 .btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -219,11 +224,17 @@ header h1 .subtitle { font-size: .75rem; color: var(--text-light); font-weight: 
 <body>
 <div class="app">
   <header>
-    <h1>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
-      Idea Board
-      <span class="subtitle">Team Innovation Tracker</span>
-    </h1>
+    <div class="header-left">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
+        </div>
+        <div>
+          <h1>Idea Board</h1>
+          <span class="subtitle">Team Innovation Tracker</span>
+        </div>
+      </div>
+    </div>
     <div class="user-bar">
       <button class="theme-btn" id="theme-toggle" onclick="IB.toggleTheme()" title="Toggle dark/light mode"></button>
       <span class="online-count" id="online-count">1 online</span>
@@ -232,6 +243,8 @@ header h1 .subtitle { font-size: .75rem; color: var(--text-light); font-weight: 
       <button class="btn btn-sm" onclick="IB.changeUser()">Switch</button>
     </div>
   </header>
+
+  <div id="dashboard-container"></div>
 
   <div class="toolbar">
     <button class="btn btn-primary" onclick="IB.showAddIdea()">+ New Idea</button>
