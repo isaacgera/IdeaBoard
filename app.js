@@ -407,6 +407,36 @@ function render() {
   if (state.currentView === 'kanban') { contentHtml = renderKanbanHtml(); }
   else { contentHtml = renderListHtml(); }
   document.getElementById('board-content').innerHTML = contentHtml;
+
+  // Update last-modified timestamp
+  updateLastUpdated();
+}
+
+function updateLastUpdated() {
+  var el = document.getElementById('last-updated');
+  if (!el) return;
+  var latest = 0;
+  Object.values(state.ideas).forEach(function(idea) {
+    if (idea.updatedAt && idea.updatedAt > latest) latest = idea.updatedAt;
+    if (idea.createdAt && idea.createdAt > latest && !idea.updatedAt) latest = idea.createdAt;
+  });
+  if (latest) {
+    el.textContent = 'Last updated ' + formatTimeAgo(latest);
+  } else {
+    el.textContent = '';
+  }
+}
+
+function formatTimeAgo(ts) {
+  var diff = Date.now() - ts;
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  if (days < 7) return days + 'd ago';
+  return formatDate(ts);
 }
 
 function renderKanbanHtml() {
@@ -702,8 +732,45 @@ function showDetail(id) {
 // ============================================================
 function confirmDelete(id){var idea=state.ideas[id];if(!idea)return;if(confirm('Delete "'+idea.title+'"?')){deleteIdea(id);closeModal();showToast('Idea deleted');}}
 function showCategoryManager(){var html='<div class="modal-header"><h2>Manage Categories</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div><div class="modal-body"><div style="margin-bottom:1rem">';state.categories.forEach(function(cat,i){html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px"><span style="flex:1;font-size:.85rem">'+escapeHtml(cat)+'</span><button class="btn btn-sm btn-danger" onclick="IB.removeCategory('+i+')">Remove</button></div>';});html+='</div><div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div></div><div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';showModal(html);}
-function addCategory(){var inp=document.getElementById('new-category');var n=inp.value.trim();if(!n)return;if(state.categories.indexOf(n)!==-1){showToast('Already exists');return;}state.categories.push(n);saveCategories();showCategoryManager();showToast('Category added');}
-function removeCategory(i){if(confirm('Remove "'+state.categories[i]+'"?')){state.categories.splice(i,1);saveCategories();showCategoryManager();showToast('Removed');}}
+function addCategory(){var inp=document.getElementById('new-category');var n=inp.value.trim();if(!n)return;if(state.categories.indexOf(n)!==-1){showToast('Already exists');return;}state.categories.push(n);saveCategories();showManageData();showToast('Category added');}
+function removeCategory(i){if(confirm('Remove "'+state.categories[i]+'"?')){state.categories.splice(i,1);saveCategories();showManageData();showToast('Removed');}}
+
+function showManageData() {
+  var html = '<div class="modal-header"><h2>Manage Data</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+
+  // Export/Import section
+  html += '<div class="detail-section"><h4>Export &amp; Import</h4>';
+  html += '<div style="display:flex;gap:.5rem;margin-bottom:.8rem;flex-wrap:wrap">';
+  html += '<button class="btn btn-primary btn-sm" onclick="IB.exportData();IB.closeModal()">Export as JSON</button>';
+  html += '<button class="btn btn-sm" onclick="IB.importData()">Import from JSON</button>';
+  html += '</div>';
+  html += '<p style="font-size:.72rem;color:var(--text-light)">Export downloads a JSON file and copies a text summary to clipboard. Import merges ideas from a JSON file.</p>';
+  html += '</div>';
+
+  // Categories section
+  html += '<div class="detail-section"><h4>Categories</h4>';
+  html += '<div style="margin-bottom:.6rem">';
+  state.categories.forEach(function(cat, i) {
+    html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;padding:.35rem .6rem;border:1px solid var(--border);border-radius:6px">';
+    html += '<span style="flex:1;font-size:.82rem">' + escapeHtml(cat) + '</span>';
+    html += '<button class="btn btn-sm btn-danger" onclick="IB.removeCategory(' + i + ')">x</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface);color:var(--text)"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div>';
+  html += '</div>';
+
+  // Data stats
+  var total = Object.keys(state.ideas).length;
+  html += '<div class="detail-section"><h4>Data Summary</h4>';
+  html += '<p style="font-size:.8rem">' + total + ' ideas stored ' + (state.firebaseReady ? '(synced via Firebase)' : '(local storage only)') + '</p>';
+  html += '</div>';
+
+  html += '</div>';
+  html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
+  showModal(html);
+}
 
 function exportData(){var ideas=getFilteredIdeas();var text='IDEA BOARD EXPORT - '+new Date().toLocaleDateString()+'\n'+'='.repeat(50)+'\n\n';ideas.forEach(function(idea,i){text+=(i+1)+'. '+idea.title+'\n   Status: '+idea.status+' | Priority: '+idea.priority+' | Category: '+idea.category+' | Votes: '+getVoteScore(idea)+'\n   Submitted by: '+idea.submittedBy+' ('+(idea.createdAt?formatDate(idea.createdAt):'')+')'+'\n';if(idea.description)text+='   Description: '+idea.description+'\n';if(idea.benefits)text+='   Benefits: '+idea.benefits+'\n';text+='\n';});text+='---\nTotal: '+ideas.length+' ideas\n';var json=JSON.stringify(ideas,null,2);var blob=new Blob([json],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='idea-board-export-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){showToast('Exported + copied');});}else{showToast('JSON downloaded');}}
 
@@ -729,7 +796,7 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData};
 
 init();
 })();

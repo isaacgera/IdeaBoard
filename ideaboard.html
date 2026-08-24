@@ -35,6 +35,10 @@ header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; hei
 .brand-icon svg { stroke: #fff; }
 header h1 { font-size: 1.3rem; color: var(--primary); line-height: 1.2; margin: 0; }
 header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400; display: block; letter-spacing: .3px; }
+.team-name { font-size: .78rem; font-weight: 400; color: var(--text-light); margin-left: .3rem; }
+.team-name::before { content: '\2014 '; }
+.last-updated { margin-left: .5rem; font-size: .65rem; color: var(--text-light); opacity: .8; }
+.last-updated::before { content: '\2022 '; }
 
 .btn { padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: .8rem; font-weight: 500; transition: all .2s; display: inline-flex; align-items: center; gap: .3rem; }
 .btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -230,8 +234,8 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
         </div>
         <div>
-          <h1>Idea Board</h1>
-          <span class="subtitle">Team Innovation Tracker</span>
+          <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span></h1>
+          <span class="subtitle">Team Innovation Tracker <span class="last-updated" id="last-updated"></span></span>
         </div>
       </div>
     </div>
@@ -260,9 +264,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
       <button id="view-kanban" class="active" onclick="IB.setView('kanban')">Board</button>
       <button id="view-list" onclick="IB.setView('list')">List</button>
     </div>
-    <button class="btn btn-sm" onclick="IB.exportData()">Export</button>
-    <button class="btn btn-sm" onclick="IB.importData()">Import</button>
-    <button class="btn btn-sm" onclick="IB.showCategoryManager()">Categories</button>
+    <button class="btn btn-sm" onclick="IB.showManageData()">Manage Data</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="IB.handleImport(this)">
   </div>
 
