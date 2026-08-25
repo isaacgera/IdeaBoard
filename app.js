@@ -100,8 +100,11 @@ function loadUser() {
   updateUserDisplay();
 }
 function promptUser() {
-  var name = prompt('Welcome to Idea Board! Enter your name:');
-  if (!name || !name.trim()) name = 'Anonymous';
+  var name = '';
+  while (!name || !name.trim()) {
+    name = prompt('Welcome to Idea Board!\n\nPlease enter your full name to continue:');
+    if (name === null) name = ''; // Cancel pressed, keep looping
+  }
   state.currentUser = { id: generateId(), name: name.trim() };
   localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
   updateUserDisplay();
@@ -112,12 +115,23 @@ function changeUser() {
   if (!name.trim()) name = 'Anonymous';
   state.currentUser.name = name.trim();
   localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
+
+  // Immediately update local role (fix for stale role after switch)
+  var isHardcodedAdmin = ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1;
+  state.users[state.currentUser.id] = { name: state.currentUser.name, role: isHardcodedAdmin ? 'admin' : 'contributor', lastSeen: Date.now() };
+
   if (state.firebaseReady) {
     db.ref('presence/' + state.currentUser.id).update({ name: state.currentUser.name });
     registerUser();
   }
+  // Close any open modal (stale permission state)
+  closeModal();
+  // Clear bulk selection
+  state.selectedIds = [];
+  // Force full UI refresh
   updateUserDisplay();
-  render(); // re-render to update all permission-based UI
+  render();
+  showToast('Switched to ' + state.currentUser.name + (isAdmin() ? ' (Admin)' : ''));
 }
 function updateUserDisplay() {
   if (!state.currentUser) return;
@@ -158,12 +172,16 @@ function canChangeStatus(idea) {
 
 function registerUser() {
   if (!state.firebaseReady || !state.currentUser) return;
-  var role = isAdmin() ? 'admin' : 'contributor';
+  // Determine role from hardcoded names ONLY (not from DB, to avoid circular reference)
+  var isHardcodedAdmin = ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1;
+  var role = isHardcodedAdmin ? 'admin' : 'contributor';
   db.ref('users/' + state.currentUser.id).set({
     name: state.currentUser.name,
     role: role,
     lastSeen: Date.now()
   });
+  // Update local state immediately so isAdmin() works correctly
+  state.users[state.currentUser.id] = { name: state.currentUser.name, role: role, lastSeen: Date.now() };
 }
 
 function loadUsers() {
@@ -611,7 +629,9 @@ function render() {
 
   // Show/hide admin-only UI
   var manageBtn = document.getElementById('btn-manage-data');
-  if (manageBtn) manageBtn.style.display = isAdmin() ? '' : 'none';
+  if (manageBtn) manageBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  var switchBtn = document.getElementById('btn-switch-user');
+  if (switchBtn) switchBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
 
   // Update user display to reflect current role
   updateUserDisplay();
