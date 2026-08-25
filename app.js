@@ -1,5 +1,5 @@
-// Idea Board - App Logic v1.2 (Aug 24, 2026)
-// v1.2: Dashboard stats, Dark mode, Comments, Upvote/Downvote
+// Idea Board - App Logic v1.3 (Aug 24, 2026)
+// v1.3: RBAC - Admin (Isaac) has full privileges, contributors can only edit/delete own ideas
 (function() {
 'use strict';
 
@@ -13,6 +13,9 @@ var firebaseConfig = {
   appId: "1:163546732868:web:8689079b56b21850785f11"
 };
 
+// Hardcoded admin name (case-insensitive match)
+var ADMIN_NAMES = ['isaac'];
+
 var state = {
   ideas: {},
   categories: ['Process Improvement', 'Technology', 'Customer Experience', 'Cost Saving', 'Team Culture', 'Other'],
@@ -22,8 +25,9 @@ var state = {
   filters: { search: '', category: '', priority: '' },
   sort: { column: 'createdAt', direction: 'desc' },
   darkMode: false,
-  dashHighlight: null, // {type:'status',value:'New'} or {type:'month'} or {type:'submitter',value:'Isaac'} or null
-  dashLocked: false
+  dashHighlight: null,
+  dashLocked: false,
+  users: {} // {userId: {name, role, lastSeen}} synced from Firebase
 };
 
 var STATUSES = ['New', 'In Progress', 'Review', 'Done'];
@@ -60,6 +64,8 @@ function initFirebase() {
     var presRef = db.ref('presence/' + state.currentUser.id);
     connRef.on('value', function(s) { if (s.val()) { presRef.set({ name: state.currentUser.name, online: true }); presRef.onDisconnect().remove(); }});
     db.ref('presence').on('value', function(s) { var c = 0; s.forEach(function() { c++; }); document.getElementById('online-count').textContent = c + ' online'; });
+    loadUsers();
+    registerUser();
   } catch (e) { state.firebaseReady = false; loadFromLocalStorage(); render(); }
 }
 
@@ -106,12 +112,125 @@ function changeUser() {
   state.currentUser.name = name.trim();
   localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
   updateUserDisplay();
-  if (state.firebaseReady) db.ref('presence/' + state.currentUser.id).update({ name: state.currentUser.name });
+  if (state.firebaseReady) {
+    db.ref('presence/' + state.currentUser.id).update({ name: state.currentUser.name });
+    registerUser();
+  }
+  render(); // re-render to update permission-based UI
 }
 function updateUserDisplay() {
   if (!state.currentUser) return;
   document.getElementById('user-display').textContent = state.currentUser.name;
   document.getElementById('user-avatar').textContent = state.currentUser.name.charAt(0).toUpperCase();
+  // Show role badge
+  var roleBadge = isAdmin() ? ' (Admin)' : '';
+  document.getElementById('user-display').textContent = state.currentUser.name + roleBadge;
+}
+
+// ============================================================
+// RBAC (Role-Based Access Control)
+// ============================================================
+function isAdmin() {
+  if (!state.currentUser) return false;
+  // Check hardcoded admin names
+  if (ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1) return true;
+  // Check promoted admins from Firebase users list
+  var userRecord = state.users[state.currentUser.id];
+  if (userRecord && userRecord.role === 'admin') return true;
+  return false;
+}
+
+function canEdit(idea) {
+  if (!idea || !state.currentUser) return false;
+  if (isAdmin()) return true;
+  return idea.submittedBy === state.currentUser.name;
+}
+
+function canDelete(idea) {
+  return canEdit(idea); // same rules: own ideas or admin
+}
+
+function canChangeStatus(idea) {
+  // Anyone can drag cards / change status (team collaboration)
+  return true;
+}
+
+function registerUser() {
+  if (!state.firebaseReady || !state.currentUser) return;
+  var role = isAdmin() ? 'admin' : 'contributor';
+  db.ref('users/' + state.currentUser.id).set({
+    name: state.currentUser.name,
+    role: role,
+    lastSeen: Date.now()
+  });
+}
+
+function loadUsers() {
+  if (!state.firebaseReady) return;
+  db.ref('users').on('value', function(snap) {
+    state.users = snap.val() || {};
+    updateUserDisplay(); // refresh in case role changed
+  });
+}
+
+function promoteUser(userId) {
+  if (!isAdmin()) { showToast('Only admins can promote users'); return; }
+  if (state.firebaseReady) {
+    db.ref('users/' + userId + '/role').set('admin');
+    showToast('User promoted to admin');
+  } else {
+    state.users[userId].role = 'admin';
+    showToast('User promoted to admin');
+  }
+  showManageUsers();
+}
+
+function demoteUser(userId) {
+  if (!isAdmin()) { showToast('Only admins can demote users'); return; }
+  if (state.firebaseReady) {
+    db.ref('users/' + userId + '/role').set('contributor');
+    showToast('User demoted to contributor');
+  } else {
+    state.users[userId].role = 'contributor';
+    showToast('User demoted to contributor');
+  }
+  showManageUsers();
+}
+
+function showManageUsers() {
+  if (!isAdmin()) { showToast('Admin access required'); return; }
+  var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Promote contributors to admin or demote admins. Hardcoded admins (' + ADMIN_NAMES.join(', ') + ') cannot be demoted.</p>';
+
+  var userIds = Object.keys(state.users);
+  if (!userIds.length) {
+    html += '<p style="font-size:.82rem;color:var(--text-light)">No users registered yet. Users appear here after they access the board.</p>';
+  } else {
+    html += '<div style="margin-bottom:.5rem">';
+    userIds.forEach(function(uid) {
+      var u = state.users[uid];
+      var isHardcoded = ADMIN_NAMES.indexOf((u.name || '').toLowerCase()) !== -1;
+      var roleLabel = u.role === 'admin' ? '<span style="color:var(--primary);font-weight:600">Admin</span>' : '<span style="color:var(--text-light)">Contributor</span>';
+      html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px">';
+      html += '<span style="flex:1;font-size:.82rem;font-weight:500">' + escapeHtml(u.name || 'Unknown') + '</span>';
+      html += '<span style="font-size:.72rem">' + roleLabel + '</span>';
+      if (!isHardcoded) {
+        if (u.role === 'admin') {
+          html += '<button class="btn btn-sm" onclick="IB.demoteUser(\'' + uid + '\')">Demote</button>';
+        } else {
+          html += '<button class="btn btn-sm btn-primary" onclick="IB.promoteUser(\'' + uid + '\')">Promote</button>';
+        }
+      } else {
+        html += '<span style="font-size:.65rem;color:var(--text-light)">(hardcoded)</span>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
+  showModal(html);
 }
 
 // ============================================================
@@ -626,7 +745,7 @@ function setupDragListeners() {
 // ADD/EDIT IDEA
 // ============================================================
 function showAddIdea(){showIdeaForm(null);}
-function showEditIdea(id){var idea=state.ideas[id];if(idea)showIdeaForm(idea);}
+function showEditIdea(id){var idea=state.ideas[id];if(!idea)return;if(!canEdit(idea)){showToast('You can only edit your own ideas');return;}showIdeaForm(idea);}
 
 function showIdeaForm(idea) {
   var isEdit=!!idea, title=isEdit?'Edit Idea':'New Idea';
@@ -723,14 +842,18 @@ function showDetail(id) {
   html+='<div class="comment-form"><textarea id="comment-input" placeholder="Add a comment..." rows="2"></textarea><button class="btn btn-primary btn-sm" onclick="IB.addComment(\''+idea.id+'\')">Post</button></div>';
   html+='</div>';
 
-  html+='</div><div class="modal-footer"><button class="btn btn-danger" onclick="IB.confirmDelete(\''+idea.id+'\')">Delete</button><button class="btn" onclick="IB.closeModal()">Close</button><button class="btn btn-primary" onclick="IB.showEditIdea(\''+idea.id+'\')">Edit</button></div>';
+  html+='</div><div class="modal-footer">';
+  if(canDelete(idea)) html+='<button class="btn btn-danger" onclick="IB.confirmDelete(\''+idea.id+'\')">Delete</button>';
+  html+='<button class="btn" onclick="IB.closeModal()">Close</button>';
+  if(canEdit(idea)) html+='<button class="btn btn-primary" onclick="IB.showEditIdea(\''+idea.id+'\')">Edit</button>';
+  html+='</div>';
   showModal(html);
 }
 
 // ============================================================
 // DELETE / CATEGORIES / EXPORT / IMPORT
 // ============================================================
-function confirmDelete(id){var idea=state.ideas[id];if(!idea)return;if(confirm('Delete "'+idea.title+'"?')){deleteIdea(id);closeModal();showToast('Idea deleted');}}
+function confirmDelete(id){var idea=state.ideas[id];if(!idea)return;if(!canDelete(idea)){showToast('You can only delete your own ideas');return;}if(confirm('Delete "'+idea.title+'"?')){deleteIdea(id);closeModal();showToast('Idea deleted');}}
 function showCategoryManager(){var html='<div class="modal-header"><h2>Manage Categories</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div><div class="modal-body"><div style="margin-bottom:1rem">';state.categories.forEach(function(cat,i){html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px"><span style="flex:1;font-size:.85rem">'+escapeHtml(cat)+'</span><button class="btn btn-sm btn-danger" onclick="IB.removeCategory('+i+')">Remove</button></div>';});html+='</div><div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div></div><div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';showModal(html);}
 function addCategory(){var inp=document.getElementById('new-category');var n=inp.value.trim();if(!n)return;if(state.categories.indexOf(n)!==-1){showToast('Already exists');return;}state.categories.push(n);saveCategories();showManageData();showToast('Category added');}
 function removeCategory(i){if(confirm('Remove "'+state.categories[i]+'"?')){state.categories.splice(i,1);saveCategories();showManageData();showToast('Removed');}}
@@ -767,6 +890,13 @@ function showManageData() {
   html += '<p style="font-size:.8rem">' + total + ' ideas stored ' + (state.firebaseReady ? '(synced via Firebase)' : '(local storage only)') + '</p>';
   html += '</div>';
 
+  // Admin: Manage Users button
+  if (isAdmin()) {
+    html += '<div class="detail-section"><h4>Administration</h4>';
+    html += '<button class="btn btn-sm" onclick="IB.showManageUsers()">Manage Users &amp; Roles</button>';
+    html += '</div>';
+  }
+
   html += '</div>';
   html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
   showModal(html);
@@ -796,7 +926,7 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser};
 
 init();
 })();
