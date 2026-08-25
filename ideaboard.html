@@ -119,7 +119,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 
 /* List View */
 .list-view { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
-.list-table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 1050px; }
+.list-table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 1080px; }
 .list-table th { background: var(--surface-alt); font-weight: 600; text-align: left; padding: .6rem .8rem; border-bottom: 2px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
 .list-table th:hover { color: var(--primary); background: var(--surface-alt); }
 .list-table td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -219,6 +219,22 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .history-cell-details { display: block; color: var(--text-light); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
 .history-cell-meta { display: block; font-size: .65rem; color: var(--text-light); }
 
+/* Bulk Action Bar */
+.bulk-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .6rem .8rem; margin-bottom: .6rem; background: var(--primary); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(99,102,241,.2); position: sticky; top: 0; z-index: 10; }
+.bulk-bar .bulk-count { color: #fff; font-size: .82rem; font-weight: 600; margin-right: .3rem; }
+.bulk-bar select { padding: .3rem .5rem; border: 1px solid rgba(255,255,255,.3); border-radius: 5px; font-size: .75rem; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; }
+.bulk-bar select option { background: var(--surface); color: var(--text); }
+.bulk-bar .btn { border-color: rgba(255,255,255,.4); color: #fff; background: rgba(255,255,255,.1); }
+.bulk-bar .btn:hover { background: rgba(255,255,255,.25); border-color: #fff; }
+.bulk-bar .btn-danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+.bulk-bar .btn-danger:hover { background: #b91c1c; }
+
+/* Checkbox column */
+.checkbox-col { width: 32px; min-width: 32px; text-align: center; padding: .3rem !important; }
+.checkbox-col input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
+.list-table tr.row-selected { background: rgba(99,102,241,.08); }
+.list-table tr.row-selected td { border-color: rgba(99,102,241,.15); }
+
 /* Responsive */
 @media (max-width: 1024px) { .kanban { grid-template-columns: repeat(2, 1fr); } .dashboard { flex-wrap: wrap; } }
 @media (max-width: 640px) { .kanban { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } header { flex-direction: column; align-items: flex-start; } .toolbar { flex-direction: column; align-items: stretch; } .dashboard .stat-card { min-width: 80px; } }
@@ -264,7 +280,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
       <button id="view-kanban" class="active" onclick="IB.setView('kanban')">Board</button>
       <button id="view-list" onclick="IB.setView('list')">List</button>
     </div>
-    <button class="btn btn-sm" onclick="IB.showManageData()">Manage Data</button>
+    <button class="btn btn-sm" id="btn-manage-data" onclick="IB.showManageData()" style="display:none">Manage Data</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="IB.handleImport(this)">
   </div>
 
@@ -278,6 +294,6 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="app.js?v=1.4"></script>
+<script src="app.js?v=1.6"></script>
 </body>
 </html>

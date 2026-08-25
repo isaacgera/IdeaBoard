@@ -27,7 +27,8 @@ var state = {
   darkMode: false,
   dashHighlight: null,
   dashLocked: false,
-  users: {} // {userId: {name, role, lastSeen}} synced from Firebase
+  users: {}, // {userId: {name, role, lastSeen}} synced from Firebase
+  selectedIds: [] // bulk selection in list view
 };
 
 var STATUSES = ['New', 'In Progress', 'Review', 'Done'];
@@ -607,6 +608,10 @@ function render() {
 
   // Update last-modified timestamp
   updateLastUpdated();
+
+  // Show/hide admin-only UI
+  var manageBtn = document.getElementById('btn-manage-data');
+  if (manageBtn) manageBtn.style.display = isAdmin() ? '' : 'none';
 }
 
 function updateLastUpdated() {
@@ -694,7 +699,42 @@ function renderListHtml() {
   var sortCol = state.sort.column, sortDir = state.sort.direction;
   function si(col) { if (sortCol!==col) return ' <span class="sort-icon">&#8597;</span>'; return sortDir==='asc'?' <span class="sort-icon active">&#9650;</span>':' <span class="sort-icon active">&#9660;</span>'; }
 
-  var html = '<div class="list-view"><table class="list-table"><thead><tr>' +
+  var selCount = state.selectedIds.length;
+  var html = '';
+
+  // Bulk action bar (shown when items selected)
+  if (selCount > 0) {
+    var canDeleteCount = 0;
+    state.selectedIds.forEach(function(id) {
+      var idea = state.ideas[id];
+      if (idea && canDelete(idea)) canDeleteCount++;
+    });
+
+    html += '<div class="bulk-bar">';
+    html += '<span class="bulk-count">' + selCount + ' selected</span>';
+    html += '<select onchange="IB.bulkChangeStatus(this.value);this.selectedIndex=0"><option value="">Change Status...</option>';
+    STATUSES.forEach(function(s) { html += '<option value="' + s + '">' + s + '</option>'; });
+    html += '</select>';
+    html += '<select onchange="IB.bulkChangePriority(this.value);this.selectedIndex=0"><option value="">Change Priority...</option>';
+    PRIORITIES.forEach(function(p) { html += '<option value="' + p + '">' + p + '</option>'; });
+    html += '</select>';
+    html += '<select onchange="IB.bulkChangeCategory(this.value);this.selectedIndex=0"><option value="">Change Category...</option>';
+    state.categories.forEach(function(c) { html += '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; });
+    html += '</select>';
+    if (canDeleteCount > 0) {
+      var delLabel = canDeleteCount === selCount ? 'Delete ' + selCount : 'Delete ' + canDeleteCount + ' of ' + selCount + ' (yours)';
+      html += '<button class="btn btn-sm btn-danger" onclick="IB.bulkDelete()">' + delLabel + '</button>';
+    }
+    html += '<button class="btn btn-sm" onclick="IB.bulkClear()">Clear</button>';
+    html += '</div>';
+  }
+
+  // Table
+  var allVisibleIds = ideas.map(function(i) { return i.id; });
+  var allSelected = allVisibleIds.length > 0 && allVisibleIds.every(function(id) { return state.selectedIds.indexOf(id) !== -1; });
+
+  html += '<div class="list-view"><table class="list-table"><thead><tr>' +
+    '<th class="checkbox-col" onclick="IB.bulkToggleAll(event)"><input type="checkbox" ' + (allSelected ? 'checked' : '') + ' onclick="IB.bulkToggleAll(event)"></th>' +
     '<th onclick="IB.sortBy(\'title\')">Title'+si('title')+'</th>' +
     '<th onclick="IB.sortBy(\'category\')">Category'+si('category')+'</th>' +
     '<th onclick="IB.sortBy(\'status\')">Status'+si('status')+'</th>' +
@@ -705,12 +745,13 @@ function renderListHtml() {
     '<th>Last Change</th>' +
     '</tr></thead><tbody>';
 
-  if (!ideas.length) { html += '<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-light)">No ideas yet.</td></tr>'; }
+  if (!ideas.length) { html += '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-light)">No ideas yet.</td></tr>'; }
 
   ideas.forEach(function(idea) {
     var sc = 'status-'+idea.status.toLowerCase().replace(' ','-');
     var pc = 'priority-'+idea.priority.toLowerCase();
     var score = getVoteScore(idea);
+    var isSelected = state.selectedIds.indexOf(idea.id) !== -1;
     var lastChange = '';
     if (idea.history && idea.history.length) {
       var last = idea.history[idea.history.length-1];
@@ -718,7 +759,8 @@ function renderListHtml() {
       if (last.details) lastChange += '<span class="history-cell-details">'+escapeHtml(last.details)+'</span>';
       lastChange += '<span class="history-cell-meta">'+escapeHtml(last.user)+' &middot; '+formatDate(last.timestamp)+'</span>';
     }
-    html += '<tr onclick="IB.showDetail(\''+idea.id+'\')">' +
+    html += '<tr class="' + (isSelected ? 'row-selected' : '') + '" onclick="IB.showDetail(\''+idea.id+'\')">' +
+      '<td class="checkbox-col" onclick="event.stopPropagation()"><input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onchange="IB.bulkToggle(\''+idea.id+'\',event)"></td>' +
       '<td style="font-weight:600">'+escapeHtml(idea.title)+'</td>' +
       '<td>'+escapeHtml(idea.category)+'</td>' +
       '<td><span class="status-badge '+sc+'">'+idea.status+'</span></td>' +
@@ -937,6 +979,7 @@ function addCategory(){var inp=document.getElementById('new-category');var n=inp
 function removeCategory(i){if(confirm('Remove "'+state.categories[i]+'"?')){state.categories.splice(i,1);saveCategories();showManageData();showToast('Removed');}}
 
 function showManageData() {
+  if (!isAdmin()) { showToast('Admin access required'); return; }
   var html = '<div class="modal-header"><h2>Manage Data</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
   html += '<div class="modal-body">';
 
@@ -986,6 +1029,110 @@ function importData(){document.getElementById('import-file').click();}
 function handleImport(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);var ideas=[];if(Array.isArray(data))ideas=data;else if(data.ideas){ideas=Array.isArray(data.ideas)?data.ideas:Object.values(data.ideas);if(data.categories&&Array.isArray(data.categories)){state.categories=data.categories;saveCategories();}}if(!ideas.length){showToast('No ideas found');input.value='';return;}if(!confirm('Found '+ideas.length+' ideas. Merge?')){input.value='';return;}var imp=0;ideas.forEach(function(idea){if(!idea.title)return;if(!idea.id)idea.id=generateId();if(!idea.status)idea.status='New';if(!idea.priority)idea.priority='Medium';if(!idea.category)idea.category=state.categories[0]||'Other';if(!idea.submittedBy)idea.submittedBy=state.currentUser.name;if(!idea.createdAt)idea.createdAt=Date.now();if(!idea.updatedAt)idea.updatedAt=Date.now();if(!idea.description)idea.description='';if(!idea.benefits)idea.benefits='';if(!idea.comments)idea.comments=[];if(!idea.history)idea.history=[];if(!idea.votes)idea.votes={};if(!idea.dates){idea.dates={created:idea.createdAt};if(idea.status==='In Progress'||idea.status==='Review'||idea.status==='Done')idea.dates.started=idea.createdAt;if(idea.status==='Review'||idea.status==='Done')idea.dates.inReview=idea.updatedAt||idea.createdAt;if(idea.status==='Done')idea.dates.completed=idea.updatedAt||idea.createdAt;}saveIdea(idea,true);imp++;});showToast('Imported '+imp+' ideas');if(!state.firebaseReady)render();}catch(err){showToast('Error: Invalid JSON');console.error(err);}input.value='';};reader.readAsText(file);}
 
 // ============================================================
+// BULK ACTIONS (List View)
+// ============================================================
+function bulkToggle(id, e) {
+  if (e) e.stopPropagation();
+  var idx = state.selectedIds.indexOf(id);
+  if (idx !== -1) { state.selectedIds.splice(idx, 1); }
+  else { state.selectedIds.push(id); }
+  render();
+}
+
+function bulkToggleAll(e) {
+  if (e) e.stopPropagation();
+  var ideas = getFilteredIdeas();
+  var allVisibleIds = ideas.map(function(i) { return i.id; });
+  var allSelected = allVisibleIds.every(function(id) { return state.selectedIds.indexOf(id) !== -1; });
+  if (allSelected) {
+    state.selectedIds = [];
+  } else {
+    state.selectedIds = allVisibleIds.slice();
+  }
+  render();
+}
+
+function bulkClear() {
+  state.selectedIds = [];
+  render();
+}
+
+function bulkChangeStatus(newStatus) {
+  if (!newStatus || !state.selectedIds.length) return;
+  var count = 0;
+  state.selectedIds.forEach(function(id) {
+    var idea = state.ideas[id];
+    if (!idea) return;
+    if (!canEdit(idea) && !canChangeStatus(idea)) return;
+    var oldStatus = idea.status;
+    if (oldStatus === newStatus) return;
+    updateStatusDates(idea, newStatus, oldStatus);
+    addAuditEntry(idea, 'Status changed', oldStatus + ' \u2192 ' + newStatus + ' (bulk)');
+    idea.status = newStatus;
+    idea.updatedAt = Date.now();
+    idea.updatedBy = state.currentUser.name;
+    saveIdea(idea, true);
+    count++;
+  });
+  state.selectedIds = [];
+  showToast(count + ' ideas moved to ' + newStatus);
+  if (!state.firebaseReady) render();
+}
+
+function bulkChangePriority(newPriority) {
+  if (!newPriority || !state.selectedIds.length) return;
+  var count = 0;
+  state.selectedIds.forEach(function(id) {
+    var idea = state.ideas[id];
+    if (!idea || !canEdit(idea)) return;
+    if (idea.priority === newPriority) return;
+    addAuditEntry(idea, 'Priority changed', idea.priority + ' \u2192 ' + newPriority + ' (bulk)');
+    idea.priority = newPriority;
+    idea.updatedAt = Date.now();
+    idea.updatedBy = state.currentUser.name;
+    saveIdea(idea, true);
+    count++;
+  });
+  state.selectedIds = [];
+  showToast(count + ' ideas set to ' + newPriority + ' priority');
+  if (!state.firebaseReady) render();
+}
+
+function bulkChangeCategory(newCategory) {
+  if (!newCategory || !state.selectedIds.length) return;
+  var count = 0;
+  state.selectedIds.forEach(function(id) {
+    var idea = state.ideas[id];
+    if (!idea || !canEdit(idea)) return;
+    if (idea.category === newCategory) return;
+    addAuditEntry(idea, 'Category changed', idea.category + ' \u2192 ' + newCategory + ' (bulk)');
+    idea.category = newCategory;
+    idea.updatedAt = Date.now();
+    idea.updatedBy = state.currentUser.name;
+    saveIdea(idea, true);
+    count++;
+  });
+  state.selectedIds = [];
+  showToast(count + ' ideas moved to ' + newCategory);
+  if (!state.firebaseReady) render();
+}
+
+function bulkDelete() {
+  if (!state.selectedIds.length) return;
+  var deletable = [];
+  state.selectedIds.forEach(function(id) {
+    var idea = state.ideas[id];
+    if (idea && canDelete(idea)) deletable.push(id);
+  });
+  if (!deletable.length) { showToast('No permission to delete selected ideas'); return; }
+  if (!confirm('Delete ' + deletable.length + ' idea(s)? This cannot be undone.')) return;
+  deletable.forEach(function(id) { deleteIdea(id); });
+  state.selectedIds = [];
+  showToast(deletable.length + ' ideas deleted');
+  if (!state.firebaseReady) render();
+}
+
+// ============================================================
 // MODAL & UTILITIES
 // ============================================================
 function showModal(h){document.getElementById('modal-content').innerHTML=h;document.getElementById('modal-overlay').classList.add('show');}
@@ -1004,7 +1151,7 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser,bulkToggle:bulkToggle,bulkToggleAll:bulkToggleAll,bulkClear:bulkClear,bulkChangeStatus:bulkChangeStatus,bulkChangePriority:bulkChangePriority,bulkChangeCategory:bulkChangeCategory,bulkDelete:bulkDelete};
 
 init();
 })();
