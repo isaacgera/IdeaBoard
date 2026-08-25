@@ -14,7 +14,7 @@ var firebaseConfig = {
 };
 
 // Hardcoded admin name (case-insensitive match)
-var ADMIN_NAMES = ['isaac'];
+var ADMIN_NAMES = ['isaac gera'];
 
 var state = {
   ideas: {},
@@ -201,7 +201,7 @@ function showManageUsers() {
   if (!isAdmin()) { showToast('Admin access required'); return; }
   var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
   html += '<div class="modal-body">';
-  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Promote contributors to admin or demote admins. Hardcoded admins (' + ADMIN_NAMES.join(', ') + ') cannot be demoted.</p>';
+  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Manage team members. Edit renames the user (and remaps their ideas). Delete removes the user (their ideas transfer to admin). Hardcoded admin (' + ADMIN_NAMES.join(', ') + ') cannot be modified.</p>';
 
   var userIds = Object.keys(state.users);
   if (!userIds.length) {
@@ -212,8 +212,8 @@ function showManageUsers() {
       var u = state.users[uid];
       var isHardcoded = ADMIN_NAMES.indexOf((u.name || '').toLowerCase()) !== -1;
       var roleLabel = u.role === 'admin' ? '<span style="color:var(--primary);font-weight:600">Admin</span>' : '<span style="color:var(--text-light)">Contributor</span>';
-      html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px">';
-      html += '<span style="flex:1;font-size:.82rem;font-weight:500">' + escapeHtml(u.name || 'Unknown') + '</span>';
+      html += '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;flex-wrap:wrap">';
+      html += '<span style="flex:1;font-size:.82rem;font-weight:500;min-width:100px">' + escapeHtml(u.name || 'Unknown') + '</span>';
       html += '<span style="font-size:.72rem">' + roleLabel + '</span>';
       if (!isHardcoded) {
         if (u.role === 'admin') {
@@ -221,6 +221,8 @@ function showManageUsers() {
         } else {
           html += '<button class="btn btn-sm btn-primary" onclick="IB.promoteUser(\'' + uid + '\')">Promote</button>';
         }
+        html += '<button class="btn btn-sm" onclick="IB.editUser(\'' + uid + '\')" title="Rename user">Edit</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="IB.deleteUser(\'' + uid + '\')" title="Delete user (ideas transfer to admin)">Delete</button>';
       } else {
         html += '<span style="font-size:.65rem;color:var(--text-light)">(hardcoded)</span>';
       }
@@ -231,6 +233,82 @@ function showManageUsers() {
   html += '</div>';
   html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
   showModal(html);
+}
+
+function editUser(userId) {
+  if (!isAdmin()) { showToast('Admin access required'); return; }
+  var user = state.users[userId];
+  if (!user) return;
+  var oldName = user.name;
+  var newName = prompt('Rename user "' + oldName + '" to:', oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  newName = newName.trim();
+
+  // Update user record
+  if (state.firebaseReady) {
+    db.ref('users/' + userId + '/name').set(newName);
+  } else {
+    state.users[userId].name = newName;
+  }
+
+  // Remap all ideas from old name to new name
+  Object.keys(state.ideas).forEach(function(id) {
+    var idea = state.ideas[id];
+    var changed = false;
+    if (idea.submittedBy === oldName) { idea.submittedBy = newName; changed = true; }
+    if (idea.updatedBy === oldName) { idea.updatedBy = newName; changed = true; }
+    // Update comments by this user
+    if (idea.comments) {
+      idea.comments.forEach(function(c) { if (c.user === oldName) c.user = newName; });
+      changed = true;
+    }
+    // Update history entries
+    if (idea.history) {
+      idea.history.forEach(function(h) { if (h.user === oldName) h.user = newName; });
+      changed = true;
+    }
+    if (changed) saveIdea(idea, true);
+  });
+
+  showToast('User renamed: ' + oldName + ' → ' + newName);
+  if (!state.firebaseReady) render();
+  showManageUsers();
+}
+
+function deleteUser(userId) {
+  if (!isAdmin()) { showToast('Admin access required'); return; }
+  var user = state.users[userId];
+  if (!user) return;
+  var userName = user.name;
+
+  // Get admin name for reassignment
+  var adminName = state.currentUser.name;
+
+  if (!confirm('Delete user "' + userName + '"?\n\nTheir ideas will be reassigned to you (' + adminName + '). This cannot be undone.')) return;
+
+  // Reassign all ideas from deleted user to admin
+  Object.keys(state.ideas).forEach(function(id) {
+    var idea = state.ideas[id];
+    if (idea.submittedBy === userName) {
+      idea.submittedBy = adminName;
+      idea.updatedAt = Date.now();
+      idea.updatedBy = adminName;
+      addAuditEntry(idea, 'Reassigned', 'User ' + userName + ' deleted, idea reassigned to ' + adminName);
+      saveIdea(idea, true);
+    }
+  });
+
+  // Remove user record
+  if (state.firebaseReady) {
+    db.ref('users/' + userId).remove();
+    db.ref('presence/' + userId).remove();
+  } else {
+    delete state.users[userId];
+  }
+
+  showToast('User "' + userName + '" deleted. Ideas reassigned to ' + adminName);
+  if (!state.firebaseReady) render();
+  showManageUsers();
 }
 
 // ============================================================
@@ -926,7 +1004,7 @@ function showToast(msg){var el=document.getElementById('toast');el.textContent=m
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser};
 
 init();
 })();
