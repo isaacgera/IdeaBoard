@@ -28,7 +28,8 @@ var state = {
   dashHighlight: null,
   dashLocked: false,
   users: {}, // {userId: {name, role, lastSeen}} synced from Firebase
-  selectedIds: [] // bulk selection in list view
+  selectedIds: [], // bulk selection in list view
+  onlineUsers: {} // presence data from Firebase
 };
 
 var STATUSES = ['New', 'In Progress', 'Review', 'Done'];
@@ -64,7 +65,7 @@ function initFirebase() {
     var connRef = db.ref('.info/connected');
     var presRef = db.ref('presence/' + state.currentUser.id);
     connRef.on('value', function(s) { if (s.val()) { presRef.set({ name: state.currentUser.name, online: true }); presRef.onDisconnect().remove(); }});
-    db.ref('presence').on('value', function(s) { var c = 0; s.forEach(function() { c++; }); document.getElementById('online-count').textContent = c + ' online'; });
+    db.ref('presence').on('value', function(s) { state.onlineUsers = s.val() || {}; var c = Object.keys(state.onlineUsers).length; document.getElementById('online-count').textContent = c + ' online'; });
     loadUsers();
     registerUser();
   } catch (e) { state.firebaseReady = false; loadFromLocalStorage(); render(); }
@@ -221,33 +222,25 @@ function showOnlineUsers() {
   var html = '<div class="modal-header"><h2>Online Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
   html += '<div class="modal-body">';
 
-  if (state.firebaseReady) {
-    // Read presence from state (updated by Firebase listener)
-    var presenceRef = db.ref('presence');
-    presenceRef.once('value', function(snap) {
-      var users = snap.val() || {};
-      var userIds = Object.keys(users);
-      var content = '';
-      if (!userIds.length) {
-        content = '<p style="font-size:.82rem;color:var(--text-light)">No users currently online.</p>';
-      } else {
-        content = '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:.8rem">' + userIds.length + ' user(s) currently active:</p>';
-        content += '<div style="display:flex;flex-direction:column;gap:.4rem">';
-        userIds.forEach(function(uid) {
-          var u = users[uid];
-          var name = u.name || 'Unknown';
-          var initial = name.charAt(0).toUpperCase();
-          content += '<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px">';
-          content += '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">' + initial + '</div>';
-          content += '<span style="font-size:.85rem;font-weight:500">' + escapeHtml(name) + '</span>';
-          content += '<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#10b981"></span>';
-          content += '</div>';
-        });
-        content += '</div>';
-      }
-      document.getElementById('modal-content').querySelector('.modal-body').innerHTML = content;
-    });
-    html += '<p style="font-size:.82rem;color:var(--text-light)">Loading...</p>';
+  if (state.firebaseReady && state.onlineUsers) {
+    var userIds = Object.keys(state.onlineUsers);
+    if (!userIds.length) {
+      html += '<p style="font-size:.82rem;color:var(--text-light)">No users currently online.</p>';
+    } else {
+      html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:.8rem">' + userIds.length + ' user(s) currently active:</p>';
+      html += '<div style="display:flex;flex-direction:column;gap:.4rem">';
+      userIds.forEach(function(uid) {
+        var u = state.onlineUsers[uid];
+        var name = u.name || 'Unknown';
+        var initial = name.charAt(0).toUpperCase();
+        html += '<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px">';
+        html += '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">' + initial + '</div>';
+        html += '<span style="font-size:.85rem;font-weight:500">' + escapeHtml(name) + '</span>';
+        html += '<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#10b981"></span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
   } else {
     html += '<p style="font-size:.82rem;color:var(--text-light)">Real-time presence requires Firebase connection.</p>';
   }
