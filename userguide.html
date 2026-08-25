@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Idea Board - User Guide</title>
+<style>
+:root { --primary: #6366f1; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --surface: #fff; --border: #e2e8f0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.guide { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+h1 { font-size: 2rem; color: var(--primary); margin-bottom: .5rem; display: flex; align-items: center; gap: .5rem; }
+h1 svg { stroke: var(--primary); }
+.subtitle { color: var(--text-light); font-size: .9rem; margin-bottom: 2rem; }
+h2 { font-size: 1.3rem; color: var(--primary); margin-top: 2.5rem; margin-bottom: .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--border); }
+h3 { font-size: 1rem; color: var(--text); margin-top: 1.5rem; margin-bottom: .5rem; }
+p { margin-bottom: .8rem; font-size: .92rem; }
+ul, ol { margin: .5rem 0 1rem 1.5rem; font-size: .9rem; }
+li { margin-bottom: .4rem; }
+code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 4px; font-size: .82rem; color: #7c3aed; }
+.tip { background: #eef2ff; border-left: 4px solid var(--primary); padding: .8rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: .85rem; }
+.tip strong { color: var(--primary); }
+.warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: .8rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: .85rem; }
+.warning strong { color: #92400e; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .85rem; }
+th, td { border: 1px solid var(--border); padding: .5rem .7rem; text-align: left; }
+th { background: #f8fafc; font-weight: 600; }
+.kbd { display: inline-block; background: #f1f5f9; border: 1px solid var(--border); border-radius: 4px; padding: .1rem .4rem; font-size: .75rem; font-family: monospace; box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+.back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--primary); text-decoration: none; font-size: .85rem; }
+.back-link:hover { text-decoration: underline; }
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+.toc h3 { margin-top: 0; color: var(--text-light); font-size: .85rem; text-transform: uppercase; letter-spacing: .5px; }
+.toc ul { list-style: none; margin: .5rem 0 0 0; }
+.toc li { margin-bottom: .3rem; }
+.toc a { color: var(--primary); text-decoration: none; font-size: .88rem; }
+.toc a:hover { text-decoration: underline; }
+@media (max-width: 640px) { .guide { padding: 1rem; } h1 { font-size: 1.5rem; } }
+@media print { .back-link { display: none; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="guide">
+  <a class="back-link" href="ideaboard.html">&larr; Back to Idea Board</a>
+
+  <h1>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
+    Idea Board User Guide
+  </h1>
+  <p class="subtitle">Architecture Middleware Integration Team — Team Innovation Tracker</p>
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#getting-started">Getting Started</a></li>
+      <li><a href="#adding-ideas">Adding Ideas</a></li>
+      <li><a href="#views">Board View & List View</a></li>
+      <li><a href="#drag-drop">Drag and Drop</a></li>
+      <li><a href="#voting">Voting</a></li>
+      <li><a href="#comments">Comments</a></li>
+      <li><a href="#dashboard">Dashboard Stats</a></li>
+      <li><a href="#filtering">Search & Filtering</a></li>
+      <li><a href="#bulk-actions">Bulk Actions</a></li>
+      <li><a href="#dark-mode">Dark Mode</a></li>
+      <li><a href="#roles">Roles & Permissions</a></li>
+      <li><a href="#admin">Admin Features</a></li>
+      <li><a href="#export-import">Export & Import</a></li>
+      <li><a href="#tips">Tips & Best Practices</a></li>
+    </ul>
+  </div>
+
+  <h2 id="getting-started">Getting Started</h2>
+  <p>When you first open the Idea Board, you'll be asked to enter your name. This identifies you across the team — your name appears on ideas you submit, comments you post, and votes you cast.</p>
+  <p>A guided tour will automatically walk you through the main features on your first visit. You can replay it anytime by clicking the <strong>Tour</strong> button in the top-right corner.</p>
+  <div class="tip"><strong>Tip:</strong> Use your full name so team members know who submitted each idea.</div>
+
+  <h2 id="adding-ideas">Adding Ideas</h2>
+  <p>Click the <strong>+ New Idea</strong> button in the toolbar to submit an idea.</p>
+  <h3>Fields:</h3>
+  <table>
+    <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+    <tr><td>Title</td><td>Yes</td><td>A short, clear name for your idea</td></tr>
+    <tr><td>Description</td><td>No</td><td>Detailed explanation of what the idea involves</td></tr>
+    <tr><td>Benefits</td><td>No</td><td>What value does this bring? Time saved, cost reduced, quality improved?</td></tr>
+    <tr><td>Category</td><td>Yes</td><td>Process Improvement, Technology, Customer Experience, Cost Saving, Team Culture, or Other</td></tr>
+    <tr><td>Priority</td><td>Yes</td><td>High, Medium, or Low</td></tr>
+    <tr><td>Status</td><td>Yes</td><td>New, In Progress, Review, or Done (defaults to New)</td></tr>
+    <tr><td>Submitted By</td><td>Auto</td><td>Auto-fills with your name</td></tr>
+  </table>
+
+  <h2 id="views">Board View & List View</h2>
+  <h3>Board View (Kanban)</h3>
+  <p>Ideas are displayed as cards in four columns: <strong>New → In Progress → Review → Done</strong>. Each card shows the title, category, priority, benefits preview, submitter, and vote count.</p>
+
+  <h3>List View (Table)</h3>
+  <p>Ideas displayed in a sortable table with columns for Title, Category, Status, Priority, Votes, Submitted By, Date, and Last Change. Click any column header to sort ascending/descending.</p>
+
+  <h2 id="drag-drop">Drag and Drop</h2>
+  <p>In Board view, grab any card and drag it:</p>
+  <ul>
+    <li><strong>Between columns</strong> — changes the idea's status (e.g., drag from New to In Progress)</li>
+    <li><strong>Within a column</strong> — reorders cards (a blue line shows where it will land)</li>
+  </ul>
+  <p>Status changes via drag are recorded in the audit log with timestamps.</p>
+
+  <h2 id="voting">Voting</h2>
+  <p>Each idea has upvote (&#9650;) and downvote (&#9660;) buttons. Click to vote — click again to remove your vote. One vote per person per idea.</p>
+  <ul>
+    <li>Green score = positive consensus</li>
+    <li>Red score = negative consensus</li>
+    <li>In List view, you can sort by votes to see the most popular ideas</li>
+  </ul>
+
+  <h2 id="comments">Comments</h2>
+  <p>Click any idea to open its detail view. Scroll to the bottom to see the comments thread. Type your comment and click <strong>Post</strong>.</p>
+  <ul>
+    <li>You can delete your own comments (x button)</li>
+    <li>Comment count shows on the card (speech bubble icon)</li>
+    <li>Comments are included in the audit log</li>
+  </ul>
+
+  <h2 id="dashboard">Dashboard Stats</h2>
+  <p>The stats bar above the toolbar shows at-a-glance metrics:</p>
+  <ul>
+    <li><strong>Total Ideas</strong> — all ideas in the system</li>
+    <li><strong>New / In Progress / Review / Done</strong> — count by status</li>
+    <li><strong>This Month</strong> — ideas created in the current month</li>
+    <li><strong>Top Contributor</strong> — person who submitted the most ideas</li>
+  </ul>
+  <h3>Interactive filtering:</h3>
+  <ul>
+    <li><strong>Hover</strong> over a stat card — the board/list dims non-matching items instantly</li>
+    <li><strong>Click</strong> a stat card — locks the filter (click again or click outside to clear)</li>
+    <li>In List view, non-matching rows are hidden (true filter)</li>
+    <li>In Board view, non-matching cards fade out, matching column highlights</li>
+  </ul>
+
+  <h2 id="filtering">Search & Filtering</h2>
+  <p>Use the toolbar controls:</p>
+  <ul>
+    <li><strong>Search box</strong> — searches title, description, benefits, and submitter name</li>
+    <li><strong>Category dropdown</strong> — filter to a specific category</li>
+    <li><strong>Priority dropdown</strong> — filter by High/Medium/Low</li>
+  </ul>
+  <p>All filters work together (additive). Clear them to see all ideas.</p>
+
+  <h2 id="bulk-actions">Bulk Actions</h2>
+  <p>In List view, each row has a checkbox. Select multiple ideas to reveal the <strong>bulk action bar</strong>:</p>
+  <ul>
+    <li><strong>Change Status</strong> — move all selected to a new status</li>
+    <li><strong>Change Priority</strong> — set all to High/Medium/Low</li>
+    <li><strong>Change Category</strong> — reassign category</li>
+    <li><strong>Delete</strong> — removes ideas you have permission to delete</li>
+    <li><strong>Select All</strong> — checkbox in header selects all visible (filtered) rows</li>
+  </ul>
+  <div class="warning"><strong>Note:</strong> Contributors can only bulk-delete their own ideas. The delete button shows how many of your selection you can delete.</div>
+
+  <h2 id="dark-mode">Dark Mode</h2>
+  <p>Click the moon/sun icon (&#127769; / &#9728;&#65039;) in the header to toggle between light and dark themes. Your preference is saved and persists across sessions.</p>
+
+  <h2 id="roles">Roles & Permissions</h2>
+  <table>
+    <tr><th>Role</th><th>Can Do</th></tr>
+    <tr><td><strong>Admin</strong></td><td>Everything — edit/delete any idea, manage categories, manage users, import/export, manage data</td></tr>
+    <tr><td><strong>Contributor</strong></td><td>Add ideas, edit/delete own ideas, comment, vote, change status (drag), bulk actions on own ideas</td></tr>
+  </table>
+  <p>You are a <strong>Contributor</strong> by default. The team admin (Isaac Gera) can promote you to Admin if needed.</p>
+
+  <h2 id="admin">Admin Features</h2>
+  <p>Admin-only features accessible via the <strong>Manage Data</strong> button:</p>
+  <ul>
+    <li><strong>Export</strong> — Download all ideas as JSON + copy summary to clipboard</li>
+    <li><strong>Import</strong> — Load ideas from a JSON file (merges with existing)</li>
+    <li><strong>Categories</strong> — Add/remove categories</li>
+    <li><strong>Manage Users</strong> — Promote/demote, rename, or delete users</li>
+  </ul>
+  <div class="tip"><strong>Tip:</strong> When you delete a user, their ideas are automatically reassigned to the admin.</div>
+
+  <h2 id="export-import">Export & Import</h2>
+  <p><strong>Export</strong> (admin only): Downloads a JSON file of all ideas and copies a readable text summary to your clipboard — great for sharing via email or Teams.</p>
+  <p><strong>Import</strong> (admin only): Load ideas from a JSON file. Supports both array format and object format. Ideas are merged (not replaced).</p>
+
+  <h2 id="tips">Tips & Best Practices</h2>
+  <ul>
+    <li>Write clear, actionable titles (e.g., "Automate weekly report generation" not "Reports")</li>
+    <li>Always fill in the Benefits field — it helps the team prioritise</li>
+    <li>Use voting to surface the ideas with the most team support</li>
+    <li>Move ideas through the workflow: New → In Progress → Review → Done</li>
+    <li>Comment on ideas to add context, ask questions, or show support</li>
+    <li>Use the dashboard filters in team meetings to focus discussion</li>
+    <li>Review "stale" ideas (stuck in New for weeks) regularly</li>
+    <li>Export periodically as a backup of your team's ideas</li>
+  </ul>
+
+  <div class="tip"><strong>Need help?</strong> Click the <strong>Tour</strong> button in the app header for a guided walkthrough, or contact your admin (Isaac Gera).</div>
+
+  <p style="margin-top:3rem;color:var(--text-light);font-size:.75rem;text-align:center">Idea Board v1.7 — Architecture Middleware Integration Team — Aug 2026</p>
+</div>
+</body>
+</html>
