@@ -112,12 +112,12 @@ function changeUser() {
   if (!name.trim()) name = 'Anonymous';
   state.currentUser.name = name.trim();
   localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
-  updateUserDisplay();
   if (state.firebaseReady) {
     db.ref('presence/' + state.currentUser.id).update({ name: state.currentUser.name });
     registerUser();
   }
-  render(); // re-render to update permission-based UI
+  updateUserDisplay();
+  render(); // re-render to update all permission-based UI
 }
 function updateUserDisplay() {
   if (!state.currentUser) return;
@@ -612,6 +612,9 @@ function render() {
   // Show/hide admin-only UI
   var manageBtn = document.getElementById('btn-manage-data');
   if (manageBtn) manageBtn.style.display = isAdmin() ? '' : 'none';
+
+  // Update user display to reflect current role
+  updateUserDisplay();
 }
 
 function updateLastUpdated() {
