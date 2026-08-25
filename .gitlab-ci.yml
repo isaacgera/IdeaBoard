@@ -1,13 +1,14 @@
+image: alpine:latest
+
 pages:
   stage: deploy
+  tags:
+    - mobius_shared_runner_cloud
   script:
-    - mkdir .public
-    - cp -r * .public/ 2>/dev/null || true
-    - cp .public/index.html .public/index.html 2>/dev/null || true
-    - mv .public public
+    - mkdir public
+    - cp *.html *.js *.json public/
   artifacts:
     paths:
       - public
-  only:
-    - master
-    - main
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
