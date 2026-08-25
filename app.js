@@ -216,6 +216,47 @@ function demoteUser(userId) {
   showManageUsers();
 }
 
+function showOnlineUsers() {
+  if (!isAdmin()) return;
+  var html = '<div class="modal-header"><h2>Online Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  html += '<div class="modal-body">';
+
+  if (state.firebaseReady) {
+    // Read presence from state (updated by Firebase listener)
+    var presenceRef = db.ref('presence');
+    presenceRef.once('value', function(snap) {
+      var users = snap.val() || {};
+      var userIds = Object.keys(users);
+      var content = '';
+      if (!userIds.length) {
+        content = '<p style="font-size:.82rem;color:var(--text-light)">No users currently online.</p>';
+      } else {
+        content = '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:.8rem">' + userIds.length + ' user(s) currently active:</p>';
+        content += '<div style="display:flex;flex-direction:column;gap:.4rem">';
+        userIds.forEach(function(uid) {
+          var u = users[uid];
+          var name = u.name || 'Unknown';
+          var initial = name.charAt(0).toUpperCase();
+          content += '<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px">';
+          content += '<div style="width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">' + initial + '</div>';
+          content += '<span style="font-size:.85rem;font-weight:500">' + escapeHtml(name) + '</span>';
+          content += '<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#10b981"></span>';
+          content += '</div>';
+        });
+        content += '</div>';
+      }
+      document.getElementById('modal-content').querySelector('.modal-body').innerHTML = content;
+    });
+    html += '<p style="font-size:.82rem;color:var(--text-light)">Loading...</p>';
+  } else {
+    html += '<p style="font-size:.82rem;color:var(--text-light)">Real-time presence requires Firebase connection.</p>';
+  }
+
+  html += '</div>';
+  html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
+  showModal(html);
+}
+
 function showManageUsers() {
   if (!isAdmin()) { showToast('Admin access required'); return; }
   var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
@@ -632,6 +673,8 @@ function render() {
   if (manageBtn) manageBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
   var switchBtn = document.getElementById('btn-switch-user');
   if (switchBtn) switchBtn.style.display = isAdmin() ? 'inline-flex' : 'none';
+  var onlineBtn = document.getElementById('online-count');
+  if (onlineBtn) onlineBtn.style.display = isAdmin() ? 'inline-block' : 'none';
 
   // Update user display to reflect current role
   updateUserDisplay();
@@ -1259,7 +1302,7 @@ function checkFirstVisit() {
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser,bulkToggle:bulkToggle,bulkToggleAll:bulkToggleAll,bulkClear:bulkClear,bulkChangeStatus:bulkChangeStatus,bulkChangePriority:bulkChangePriority,bulkChangeCategory:bulkChangeCategory,bulkDelete:bulkDelete,startTour:startTour,tourNext:tourNext,tourPrev:tourPrev,tourEnd:tourEnd};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,showOnlineUsers:showOnlineUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser,bulkToggle:bulkToggle,bulkToggleAll:bulkToggleAll,bulkClear:bulkClear,bulkChangeStatus:bulkChangeStatus,bulkChangePriority:bulkChangePriority,bulkChangeCategory:bulkChangeCategory,bulkDelete:bulkDelete,startTour:startTour,tourNext:tourNext,tourPrev:tourPrev,tourEnd:tourEnd};
 
 init();
 checkFirstVisit();
