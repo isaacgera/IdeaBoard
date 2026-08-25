@@ -1,0 +1,13 @@
+pages:
+  stage: deploy
+  script:
+    - mkdir .public
+    - cp -r * .public/ 2>/dev/null || true
+    - cp .public/index.html .public/index.html 2>/dev/null || true
+    - mv .public public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+    - main
