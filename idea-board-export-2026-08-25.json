@@ -1,0 +1,183 @@
+[
+  {
+    "benefits": "Boosts team morale and creativity. Encourages cross-team collaboration. Has led to real product improvements at companies like Google and Atlassian.",
+    "category": "Team Culture",
+    "createdAt": 1724313600000,
+    "dates": {
+      "created": 1724313600000,
+      "inReview": 1787671615668,
+      "started": 1787671608743
+    },
+    "description": "Dedicate one hour every Friday afternoon for team members to work on personal projects, experiment with new tools, or collaborate on improvement ideas outside of BAU.",
+    "history": [
+      {
+        "action": "Status changed",
+        "details": "Review → In Progress",
+        "timestamp": 1787671608743,
+        "user": "IAG"
+      },
+      {
+        "action": "Status changed",
+        "details": "In Progress → Review",
+        "timestamp": 1787671615668,
+        "user": "IAG"
+      },
+      {
+        "action": "Status changed",
+        "details": "Review → New",
+        "timestamp": 1787671710286,
+        "user": "Isaac Gera"
+      }
+    ],
+    "id": "idea002",
+    "priority": "Medium",
+    "status": "New",
+    "submittedBy": "Isaac Gera",
+    "title": "Weekly Innovation Hour",
+    "updatedAt": 1787671986812,
+    "updatedBy": "Isaac Gera"
+  },
+  {
+    "benefits": "Reduces support tickets by 30%. Improves customer first-day experience. Available 24/7 unlike human agents. Estimated ROI within 3 months.",
+    "category": "Customer Experience",
+    "createdAt": 1724227200000,
+    "dates": {
+      "created": 1724227200000
+    },
+    "description": "Build a conversational chatbot for the customer portal that guides new customers through account setup, first-time configuration, and FAQ answers without needing to contact support.",
+    "id": "idea003",
+    "priority": "High",
+    "status": "New",
+    "submittedBy": "Isaac Gera",
+    "title": "Customer Onboarding Chatbot",
+    "updatedAt": 1787672024897,
+    "updatedBy": "Isaac Gera"
+  },
+  {
+    "benefits": "Faster incident detection (one place to look). Reduces context-switching. Easier handovers between shifts. Lower licensing costs by retiring redundant tools.",
+    "category": "Process Improvement",
+    "createdAt": 1724140800000,
+    "dates": {
+      "created": 1724140800000,
+      "started": 1724140800000
+    },
+    "description": "We currently have 6 different monitoring tools with separate dashboards. Propose creating a unified single-pane-of-glass dashboard using Grafana that aggregates key metrics from all sources.",
+    "history": [
+      {
+        "action": "Status changed",
+        "details": "In Progress → New",
+        "timestamp": 1787671708158,
+        "user": "Isaac Gera"
+      }
+    ],
+    "id": "idea004",
+    "priority": "High",
+    "status": "New",
+    "submittedBy": "Isaac Gera",
+    "title": "Consolidate Monitoring Dashboards",
+    "updatedAt": 1787672002049,
+    "updatedBy": "Isaac Gera"
+  },
+  {
+    "benefits": "Knowledge sharing across silos. Presentation skills development. Builds team identity. Low cost (just time investment).",
+    "category": "Team Culture",
+    "createdAt": 1723795200000,
+    "dates": {
+      "completed": 1724486400000,
+      "created": 1723795200000,
+      "inReview": 1724486400000,
+      "started": 1723795200000
+    },
+    "description": "Monthly 30-minute presentations where team members share something they have learned - a new technology, a post-mortem deep-dive, or a side project demo.",
+    "history": [
+      {
+        "action": "Status changed",
+        "details": "Done → New",
+        "timestamp": 1787671712881,
+        "user": "Isaac Gera"
+      }
+    ],
+    "id": "idea007",
+    "priority": "Low",
+    "status": "New",
+    "submittedBy": "Isaac Gera",
+    "title": "Internal Tech Talk Series",
+    "updatedAt": 1787672013007,
+    "updatedBy": "Isaac Gera"
+  },
+  {
+    "benefits": "Consistent quality across all runbooks. Faster onboarding. Reduces errors during incidents. Easier to maintain and review.",
+    "category": "Process Improvement",
+    "createdAt": 1723363200000,
+    "dates": {
+      "created": 1723363200000,
+      "started": 1723363200000
+    },
+    "description": "Create a standard template for all operational runbooks and migrate existing ad-hoc documentation into the new format. Include decision trees, escalation paths, and rollback steps.",
+    "history": [
+      {
+        "action": "Status changed",
+        "details": "In Progress → New",
+        "timestamp": 1787671705223,
+        "user": "Isaac Gera"
+      }
+    ],
+    "id": "idea012",
+    "priority": "Low",
+    "status": "New",
+    "submittedBy": "Isaac Gera",
+    "title": "Runbook Standardisation",
+    "updatedAt": 1787671994855,
+    "updatedBy": "Isaac Gera"
+  },
+  {
+    "benefits": "We can get a lot of information on usage statistics, remediating issues beforehand, and a lot more.",
+    "category": "Process Improvement",
+    "createdAt": 1787668073703,
+    "dates": {
+      "created": 1787668073703
+    },
+    "description": "Approximately 2,000 servers with CFT are transferring files but we have zero visibility on them",
+    "history": [
+      {
+        "action": "Created",
+        "details": "Idea submitted by Sami",
+        "timestamp": 1787668073703,
+        "user": "Sami"
+      }
+    ],
+    "id": "mt8rexnq5wh21n66l",
+    "priority": "Low",
+    "sortOrder": 10,
+    "status": "New",
+    "submittedBy": "Sami",
+    "title": "Gain visibility on all CFT transfers across all BT servers",
+    "updatedAt": 1787668073703,
+    "updatedBy": "Sami"
+  },
+  {
+    "benefits": "Make it much easier to maintain and make additions to MQED.",
+    "category": "Process Improvement",
+    "createdAt": 1787668744848,
+    "dates": {
+      "created": 1787668744848
+    },
+    "description": "APEX is a legacy frontend tool and is not easy to make modifications to the user interface.",
+    "history": [
+      {
+        "action": "Created",
+        "details": "Idea submitted by Sami",
+        "timestamp": 1787668744848,
+        "user": "Sami"
+      }
+    ],
+    "id": "mt8rtbin1or2iwggx",
+    "priority": "Low",
+    "sortOrder": 50,
+    "status": "New",
+    "submittedBy": "Sami",
+    "title": "Use AI to generate an MQ estate database with a better frontend instead of APEX",
+    "updatedAt": 1787668744848,
+    "updatedBy": "Sami"
+  }
+]
