@@ -2,6 +2,7 @@
 
 ## Architecture
 
+### Original Architecture (v2.3 — monolithic)
 ```
 ┌─────────────────────────────────────────────────┐
 │                  Browser (Client)                 │
@@ -24,12 +25,43 @@
     └────────────────────┘  └─────────────────┘
 ```
 
+### v3 Architecture (ES Modules)
+```
+┌──────────────────────────────────────────────────────────────┐
+│                       Browser (Client)                         │
+│                                                                │
+│  ideaboard.html ──┬── styles/*.css (8 files)                  │
+│                   └── src/app.js (type="module")              │
+│                           │                                    │
+│           ┌───────────────┼───────────────┐                   │
+│           │    ES Module Imports           │                   │
+│           ▼                               ▼                   │
+│   ┌─────────────┐  ┌──────────────────────────────────┐      │
+│   │  state.js   │  │  Feature Modules (11 files)       │      │
+│   │  (shared)   │◄─┤  auth, ideas, voting, comments,  │      │
+│   └─────────────┘  │  rendering, dragdrop, bulk,       │      │
+│                     │  modals, tour, firebase, utils    │      │
+│                     └──────────────┬───────────────────┘      │
+│                                    │                           │
+│                      window.IB (public API)                    │
+│                           │                                    │
+└───────────────────────────┼────────────────────────────────────┘
+                            │
+                ┌───────────┼───────────┐
+                │                       │
+      ┌─────────┴──────────┐  ┌────────┴────────┐
+      │  Firebase Realtime  │  │   localStorage   │
+      │     Database        │  │   (fallback)     │
+      └────────────────────┘  └─────────────────┘
+```
+
 ## File Structure
 
+### Original (v2.3 — monolithic)
 ```
 Idea Board/
-├── ideaboard.html       # Main app (HTML shell + CSS)
-├── app.js               # All application logic (v2.3)
+├── ideaboard.html       # Main app (HTML shell + inline CSS)
+├── app.js               # All application logic (single IIFE, ~680 lines)
 ├── userguide.html       # Standalone user documentation
 ├── dummy-data.json      # Sample data for testing
 ├── index.html           # Redirect for hosting (→ ideaboard.html)
@@ -39,6 +71,36 @@ Idea Board/
 ├── SESSION-LOG.md       # Development session history
 ├── SPEC-requirements.md # Requirements specification
 └── SPEC-design.md       # This file
+```
+
+### v3-modular (ES Modules — professional structure)
+```
+v3-modular/
+├── ideaboard.html              # HTML shell (CSS <link> tags + <script type="module">)
+├── styles/
+│   ├── variables.css           # CSS custom properties + resets
+│   ├── layout.css              # App shell, header, toolbar, user bar
+│   ├── components.css          # Buttons, badges, modals, forms, toast, timeline, audit
+│   ├── dashboard.css           # Stat cards, hover effects, highlight logic
+│   ├── kanban.css              # Columns, cards, drag-and-drop states
+│   ├── list.css                # Table, bulk action bar, checkboxes
+│   ├── tour.css                # Spotlight overlay + tooltip
+│   └── responsive.css          # Media queries + print
+└── src/
+    ├── app.js                  # Entry point: imports, wires window.IB, init()
+    └── modules/
+        ├── state.js            # Shared state, constants, Firebase config
+        ├── utils.js            # Utility functions (escape, format, toast)
+        ├── firebase.js         # Firebase init, presence, localStorage fallback
+        ├── auth.js             # User identity, RBAC, user admin
+        ├── ideas.js            # CRUD, audit log, status dates
+        ├── voting.js           # Upvote/downvote, score calculation
+        ├── comments.js         # Comment add/delete
+        ├── rendering.js        # Dashboard, kanban, list, filtering, sorting, theme
+        ├── dragdrop.js         # Drag-and-drop event delegation
+        ├── bulk.js             # Bulk actions (status, priority, category, delete)
+        ├── modals.js           # Modal system, forms, detail view, manage data
+        └── tour.js             # 7-step guided tour
 ```
 
 ## Data Model
@@ -110,7 +172,7 @@ Idea Board/
 
 ## State Management
 
-Single `state` object in the IIFE closure:
+Single `state` object shared across modules (exported from `state.js`):
 ```javascript
 {
   ideas: {},              // All ideas (object, keyed by id)
@@ -127,6 +189,26 @@ Single `state` object in the IIFE closure:
   selectedIds: [],        // Bulk selection in list view
   onlineUsers: {}         // Currently online users (presence)
 }
+```
+
+In the original (v2.3), state lives in the IIFE closure. In v3-modular, it is exported from `src/modules/state.js` and imported by all modules that need it.
+
+## Module Dependency Graph (v3-modular)
+
+```
+state.js ◄─── (imported by all modules)
+utils.js ◄─── (imported by auth, rendering, modals, ideas)
+firebase.js ──► state, rendering, auth
+auth.js ──► state, utils, rendering, modals, ideas
+ideas.js ──► state, firebase, rendering
+voting.js ──► state, ideas
+comments.js ──► state, utils, ideas, modals
+rendering.js ──► state, utils, voting, auth
+dragdrop.js ──► state, ideas, utils, rendering, modals
+bulk.js ──► state, ideas, auth, rendering, utils
+modals.js ──► state, utils, ideas, voting, auth, rendering
+tour.js ──► (standalone, no module imports)
+app.js ──► (imports all, wires window.IB, calls init)
 ```
 
 ## RBAC Design
@@ -215,6 +297,21 @@ App
 - Git proxy: `http://127.0.0.1:9000`
 
 ## CSS Architecture
+
+### Original (v2.3): Single inline `<style>` block in HTML (~260 lines)
+
+### v3-modular: 8 separate CSS files loaded via `<link>` tags
+
+| File | Responsibility |
+|------|---------------|
+| `variables.css` | Theme tokens (light/dark), CSS resets, body defaults |
+| `layout.css` | App shell, header (gradient bar, brand), toolbar, user bar |
+| `components.css` | Buttons, badges, modals, forms, timeline, audit log, toast, vote widget |
+| `dashboard.css` | Stat cards, hover zoom/shrink effect, highlight/dim logic |
+| `kanban.css` | Board columns, idea cards, drag-and-drop visual states |
+| `list.css` | Table, bulk action bar, checkbox column, row selection |
+| `tour.css` | Tour overlay, spotlight box-shadow trick, tooltip positioning |
+| `responsive.css` | Media queries (1024px, 640px breakpoints) + print styles |
 
 ### Theming
 - CSS custom properties (variables) on `:root` and `[data-theme="dark"]`

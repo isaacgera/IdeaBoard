@@ -67,6 +67,7 @@ th { background: #f8fafc; font-weight: 600; }
       <li><a href="#export-import">Export & Import</a></li>
       <li><a href="#audit">Audit Log & Timeline</a></li>
       <li><a href="#tips">Tips & Best Practices</a></li>
+      <li><a href="#modular">v3 Modular Version (Developer Info)</a></li>
     </ul>
   </div>
 
@@ -286,11 +287,50 @@ th { background: #f8fafc; font-weight: 600; }
     <li>Try dark mode for comfortable evening/low-light usage</li>
   </ul>
 
+  <h2 id="modular">v3 Modular Version (Developer Info)</h2>
+  <p>A restructured version of the app is available in the <code>v3-modular/</code> folder. It is functionally identical to the main app but uses a professional ES Modules architecture.</p>
+
+  <h3>What's Different?</h3>
+  <table>
+    <tr><th>Aspect</th><th>Original (v2.3)</th><th>v3-modular</th></tr>
+    <tr><td>JS structure</td><td>Single 680-line IIFE</td><td>12 modules (40-120 lines each)</td></tr>
+    <tr><td>CSS structure</td><td>Inline &lt;style&gt; block</td><td>8 separate .css files via &lt;link&gt;</td></tr>
+    <tr><td>Module system</td><td>None (IIFE closure)</td><td>Native ES Modules (import/export)</td></tr>
+    <tr><td>Build tools</td><td>None</td><td>None (still zero build)</td></tr>
+    <tr><td>Functionality</td><td>Full</td><td>Identical (same features, same Firebase)</td></tr>
+  </table>
+
+  <h3>Running the Modular Version Locally</h3>
+  <p>ES Modules require HTTP serving (not <code>file://</code> protocol). Use one of:</p>
+  <ul>
+    <li><code>npx serve v3-modular</code> (Node.js)</li>
+    <li><code>python -m http.server</code> from the <code>v3-modular</code> folder</li>
+    <li>Any local HTTP server (Live Server VS Code extension, etc.)</li>
+  </ul>
+  <p>On GitHub Pages or GitLab Pages, it works automatically since those serve over HTTPS.</p>
+
+  <h3>Module Map</h3>
+  <ul>
+    <li><code>src/app.js</code> — Entry point, wires everything together</li>
+    <li><code>src/modules/state.js</code> — Shared state and constants</li>
+    <li><code>src/modules/auth.js</code> — User identity, RBAC, user management</li>
+    <li><code>src/modules/firebase.js</code> — Firebase init, real-time sync</li>
+    <li><code>src/modules/ideas.js</code> — Create, update, delete ideas + audit log</li>
+    <li><code>src/modules/voting.js</code> — Upvote/downvote system</li>
+    <li><code>src/modules/comments.js</code> — Comment threads</li>
+    <li><code>src/modules/rendering.js</code> — All UI rendering (dashboard, board, list)</li>
+    <li><code>src/modules/dragdrop.js</code> — Drag and drop interaction</li>
+    <li><code>src/modules/bulk.js</code> — Bulk selection and actions</li>
+    <li><code>src/modules/modals.js</code> — Modal dialogs (forms, detail, manage)</li>
+    <li><code>src/modules/tour.js</code> — Guided intro tour</li>
+  </ul>
+  <div class="tip"><strong>For developers:</strong> To add a new feature, create a new module in <code>src/modules/</code>, import it in <code>app.js</code>, and expose any needed functions on <code>window.IB</code>. No other files need to change.</div>
+
   <div class="tip"><strong>Need help?</strong> Click the <strong>Tour</strong> button in the app header for a guided walkthrough, or contact your admin (Isaac Gera).</div>
 
   <hr style="margin:3rem 0 1rem;border:none;border-top:1px solid var(--border)">
   <p style="color:var(--text-light);font-size:.75rem;text-align:center">
-    Idea Board v2.3 — Architecture Middleware Integration Team — August 2026<br>
+    Idea Board v2.3 / v3.0-modular — Architecture Middleware Integration Team — August 2026<br>
     Built with Kiro AI IDE
   </p>
 </div>

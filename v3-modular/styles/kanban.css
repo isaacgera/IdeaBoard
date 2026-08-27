@@ -1,0 +1,28 @@
+/* Idea Board — Kanban Board Styles */
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin-bottom: 1.5rem; }
+.kanban-column { background: var(--surface-alt); border-radius: var(--radius); padding: .6rem; min-height: 400px; transition: background .2s, border .2s; border: 2px solid transparent; }
+.kanban-column-header { font-size: .82rem; font-weight: 700; padding: .4rem .6rem; border-radius: 6px; margin-bottom: .5rem; display: flex; align-items: center; justify-content: space-between; }
+.kanban-column-header .count { font-size: .7rem; background: rgba(255,255,255,.7); padding: .1rem .4rem; border-radius: 10px; font-weight: 600; }
+.col-new .kanban-column-header { background: #dbeafe; color: #1e40af; }
+.col-progress .kanban-column-header { background: #fef3c7; color: #92400e; }
+.col-review .kanban-column-header { background: #ede9fe; color: #5b21b6; }
+.col-done .kanban-column-header { background: #d1fae5; color: #065f46; }
+
+.idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .6rem; margin-bottom: .5rem; cursor: pointer; transition: all .15s; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.idea-card:hover { border-color: var(--primary); box-shadow: 0 3px 12px rgba(99,102,241,.12); transform: translateY(-1px); }
+.idea-card .card-title { font-size: .82rem; font-weight: 600; margin-bottom: .3rem; line-height: 1.3; }
+.idea-card .card-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .68rem; color: var(--text-light); }
+.idea-card .card-category { background: var(--surface-alt); padding: .1rem .4rem; border-radius: 4px; font-weight: 500; }
+.idea-card .card-benefits { font-size: .72rem; color: var(--text-light); margin-top: .3rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.idea-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: .4rem; font-size: .68rem; color: var(--text-light); }
+.card-actions { display: flex; align-items: center; gap: .4rem; }
+.card-comment-count { font-size: .65rem; color: var(--text-light); }
+
+/* Drag and Drop */
+.idea-card[draggable="true"] { cursor: grab; }
+.idea-card[draggable="true"]:active { cursor: grabbing; }
+.idea-card.dragging { opacity: 0.4; transform: rotate(2deg); }
+.kanban-column.drag-over { background: var(--primary); background: rgba(99,102,241,.08); border: 2px dashed var(--primary); }
+.drop-placeholder { padding: 2rem 1rem; text-align: center; color: var(--text-light); font-size: .78rem; font-style: italic; border: 1px dashed var(--border); border-radius: 6px; }
+.idea-card.drop-above { border-top: 3px solid var(--primary); }
+.idea-card.drop-below { border-bottom: 3px solid var(--primary); }

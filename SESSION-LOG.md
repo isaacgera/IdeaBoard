@@ -135,3 +135,72 @@
 - Team is ~5-15 people
 - No build tools — pure vanilla JS for simplicity
 - Follows same pattern as WealthOrah and ShiftPlanner projects
+
+## Session 2 — Aug 25, 2026
+**v3.0 Modular Restructure (ES Modules)**
+
+### Goal
+Restructure the monolithic app into a professional, component-based codebase using native ES Modules — without any build tools and without affecting the original files.
+
+### What Was Done
+- Created a complete copy at `/v3-modular/` with modular architecture
+- Split the single `app.js` (680 lines) into 12 focused modules (40-120 lines each)
+- Extracted inline CSS (~260 lines) into 8 separate stylesheet files
+- HTML reduced to a thin shell with `<link>` and `<script type="module">` tags
+- All functionality preserved pixel-for-pixel (same Firebase config, same RBAC, same features)
+
+### New File Structure
+
+```
+v3-modular/
+├── ideaboard.html              ← HTML shell (CSS links + module entry)
+├── styles/
+│   ├── variables.css           ← Theme tokens + CSS resets
+│   ├── layout.css              ← Header, toolbar, user bar
+│   ├── components.css          ← Buttons, badges, modals, forms, toast, timeline, audit
+│   ├── dashboard.css           ← Stat cards + hover/highlight effects
+│   ├── kanban.css              ← Board columns, cards, drag states
+│   ├── list.css                ← Table, bulk action bar, checkboxes
+│   ├── tour.css                ← Spotlight overlay + tooltip
+│   └── responsive.css          ← Media queries + print styles
+└── src/
+    ├── app.js                  ← Entry point: imports all modules, wires window.IB, init()
+    └── modules/
+        ├── state.js            ← Shared state object, constants, Firebase config
+        ├── utils.js            ← escapeHtml, formatDate, generateId, showToast
+        ├── firebase.js         ← Firebase init, presence tracking, localStorage fallback
+        ├── auth.js             ← User identity, RBAC, user management, online users
+        ├── ideas.js            ← CRUD operations, audit log, status date tracking
+        ├── voting.js           ← Upvote/downvote, vote score calculation
+        ├── comments.js         ← Add/delete comments
+        ├── rendering.js        ← Dashboard, kanban view, list view, filtering, sorting, theme
+        ├── dragdrop.js         ← Drag and drop between/within columns
+        ├── bulk.js             ← Bulk status/priority/category change, bulk delete
+        ├── modals.js           ← Modal system, idea form, detail view, manage data/categories
+        └── tour.js             ← 7-step guided intro tour
+```
+
+### Technical Decisions
+- **ES Modules (native):** `import`/`export` syntax, `<script type="module">` — works in all modern browsers without bundler
+- **No build tools:** Stays true to the "no npm, no node_modules" philosophy
+- **window.IB namespace retained:** Inline `onclick` handlers in HTML still reference `IB.*` — the entry point wires all exports to `window.IB`
+- **Firebase SDK still loaded via `<script>` tags:** The compat SDK doesn't support ES module import, so it remains as global scripts before the module entry point
+- **CSS `<link>` tags:** 8 stylesheet files loaded in order (variables first, responsive last)
+
+### What Stays the Same
+- All features work identically
+- Same Firebase project and config
+- Same localStorage fallback
+- Same deployment model (static files → GitHub/GitLab Pages)
+- Original files completely untouched
+
+### Deployment Note
+- The v3-modular version requires serving via HTTP (not `file://`) due to ES module restrictions
+- Use `npx serve v3-modular` or `python -m http.server` for local testing
+- GitHub Pages / GitLab Pages serve over HTTP by default — no issue for deployed use
+
+### Effort
+- ~1.5 hours total (analysis + restructuring + verification)
+- Kiro performed the full extraction autonomously
+
+---

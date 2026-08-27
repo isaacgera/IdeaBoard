@@ -1,0 +1,21 @@
+/* Idea Board — CSS Variables (Theme Tokens) */
+:root, [data-theme="light"] {
+  --primary: #6366f1; --primary-light: #818cf8; --accent: #f59e0b;
+  --bg: #f8fafc; --surface: #fff; --surface-alt: #f1f5f9;
+  --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+  --radius: 10px; --shadow: 0 2px 8px rgba(0,0,0,.06);
+  --status-new: #3b82f6; --status-progress: #f59e0b; --status-review: #8b5cf6; --status-done: #10b981;
+  --priority-high: #ef4444; --priority-medium: #f59e0b; --priority-low: #6b7280;
+  --vote-up: #10b981; --vote-down: #ef4444;
+}
+[data-theme="dark"] {
+  --primary: #818cf8; --primary-light: #a5b4fc; --accent: #fbbf24;
+  --bg: #0f172a; --surface: #1e293b; --surface-alt: #334155;
+  --text: #f1f5f9; --text-light: #94a3b8; --border: #334155;
+  --shadow: 0 2px 8px rgba(0,0,0,.3);
+  --status-new: #60a5fa; --status-progress: #fbbf24; --status-review: #a78bfa; --status-done: #34d399;
+  --priority-high: #f87171; --priority-medium: #fbbf24; --priority-low: #9ca3af;
+  --vote-up: #34d399; --vote-down: #f87171;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; transition: background .3s, color .3s; }

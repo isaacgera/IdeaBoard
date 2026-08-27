@@ -1,0 +1,32 @@
+/* Idea Board — Layout (App shell, Header, Toolbar, User bar) */
+.app { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; padding: .8rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--accent), var(--status-done)); }
+.header-left { display: flex; align-items: center; }
+.header-brand { display: flex; align-items: center; gap: .7rem; }
+.brand-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 3px 10px rgba(99,102,241,.25); }
+.brand-icon svg { stroke: #fff; }
+header h1 { font-size: 1.3rem; color: var(--primary); line-height: 1.2; margin: 0; }
+header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400; display: block; letter-spacing: .3px; }
+.team-name { font-size: .78rem; font-weight: 400; color: var(--text-light); margin-left: .3rem; }
+.team-name::before { content: '\2014 '; }
+.last-updated { margin-left: .5rem; font-size: .65rem; color: var(--text-light); opacity: .8; }
+.last-updated::before { content: '\2022 '; }
+
+.toolbar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.toolbar .search-box { flex: 1; min-width: 180px; padding: .4rem .7rem; border: 1px solid var(--border); border-radius: 6px; font-size: .82rem; outline: none; background: var(--surface); color: var(--text); transition: border-color .2s; }
+.toolbar .search-box:focus { border-color: var(--primary); }
+.toolbar select { padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .8rem; background: var(--surface); color: var(--text); cursor: pointer; }
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.view-toggle button { padding: .4rem .7rem; border: none; background: var(--surface); color: var(--text); cursor: pointer; font-size: .78rem; font-weight: 500; transition: all .2s; }
+.view-toggle button.active { background: var(--primary); color: #fff; }
+.view-toggle button:hover:not(.active) { background: var(--surface-alt); }
+
+/* User bar */
+.user-bar { display: flex; align-items: center; gap: .5rem; }
+.user-bar .user-name { font-size: .78rem; font-weight: 500; color: var(--text-light); }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
+.online-count { font-size: .7rem; color: var(--text-light); background: #dcfce7; padding: .15rem .4rem; border-radius: 10px; cursor: pointer; transition: all .2s; }
+.online-count:hover { background: #bbf7d0; box-shadow: 0 2px 6px rgba(16,185,129,.2); }
+.theme-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: .3rem .5rem; font-size: 1rem; line-height: 1; }

@@ -113,6 +113,16 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 ### NFR-01: No Build Tools
 - Pure HTML/CSS/JS — no npm, no bundler, no framework
 - Single folder deployment
+- v3-modular uses native ES Modules (`import`/`export`) — still no build step required
+- Works in all modern browsers (Chrome, Edge, Firefox, Safari)
+
+### NFR-01b: Modular Architecture (v3-modular)
+- Code split into 12 focused ES modules (40-120 lines each)
+- CSS split into 8 thematic stylesheet files
+- Clear separation of concerns: state, auth, CRUD, rendering, UI interactions
+- Entry point (`src/app.js`) wires all modules to a single `window.IB` namespace
+- Facilitates onboarding, testing, and maintenance
+- Requires HTTP serving (not `file://` protocol) due to ES module security restrictions
 
 ### NFR-02: Real-Time Sync
 - Firebase Realtime Database for multi-user collaboration
@@ -141,3 +151,12 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 - GitHub Pages (public)
 - GitLab Pages (internal, via CI pipeline)
 - No server infrastructure required
+- v3-modular deploys identically (static files only)
+- Multiple CSS/JS files are fine for internal team use (<15 users); no bundling needed
+
+### NFR-08: Code Maintainability (v3-modular)
+- Each module has a single responsibility
+- Shared state is centralized in one module (`state.js`)
+- Public API surface is explicitly declared in the entry point
+- New features can be added by creating new modules without touching existing code
+- Module dependency graph is documented in SPEC-design.md

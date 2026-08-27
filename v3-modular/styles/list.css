@@ -1,0 +1,24 @@
+/* Idea Board — List View & Bulk Actions */
+.list-view { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+.list-table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 1080px; }
+.list-table th { background: var(--surface-alt); font-weight: 600; text-align: left; padding: .6rem .8rem; border-bottom: 2px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+.list-table th:hover { color: var(--primary); background: var(--surface-alt); }
+.list-table td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.list-table tr:hover { background: var(--surface-alt); }
+.list-table tr { cursor: pointer; transition: background .15s; }
+
+/* Bulk Action Bar */
+.bulk-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .6rem .8rem; margin-bottom: .6rem; background: var(--primary); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(99,102,241,.2); position: sticky; top: 0; z-index: 10; }
+.bulk-bar .bulk-count { color: #fff; font-size: .82rem; font-weight: 600; margin-right: .3rem; }
+.bulk-bar select { padding: .3rem .5rem; border: 1px solid rgba(255,255,255,.3); border-radius: 5px; font-size: .75rem; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; }
+.bulk-bar select option { background: var(--surface); color: var(--text); }
+.bulk-bar .btn { border-color: rgba(255,255,255,.4); color: #fff; background: rgba(255,255,255,.1); }
+.bulk-bar .btn:hover { background: rgba(255,255,255,.25); border-color: #fff; }
+.bulk-bar .btn-danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+.bulk-bar .btn-danger:hover { background: #b91c1c; }
+
+/* Checkbox column */
+.checkbox-col { width: 32px; min-width: 32px; text-align: center; padding: .3rem !important; }
+.checkbox-col input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
+.list-table tr.row-selected { background: rgba(99,102,241,.08); }
+.list-table tr.row-selected td { border-color: rgba(99,102,241,.15); }

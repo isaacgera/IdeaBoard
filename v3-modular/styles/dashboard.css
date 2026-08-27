@@ -1,0 +1,24 @@
+/* Idea Board — Dashboard Stats */
+.dashboard { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.stat-card { flex: 1; min-width: 100px; padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); transition: all .3s cubic-bezier(.4,0,.2,1); }
+.stat-card.clickable { cursor: pointer; }
+.stat-card .stat-number { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text); }
+.stat-card .stat-label { display: block; font-size: .65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .3px; }
+.stat-card.stat-new .stat-number { color: var(--status-new); }
+.stat-card.stat-progress .stat-number { color: var(--status-progress); }
+.stat-card.stat-review .stat-number { color: var(--status-review); }
+.stat-card.stat-done .stat-number { color: var(--status-done); }
+
+/* Stat card hover: zoom active, shrink siblings */
+.dashboard:hover .stat-card.clickable { transform: scale(0.93); opacity: 0.7; }
+.dashboard:hover .stat-card.clickable:hover { transform: scale(1.12); opacity: 1; box-shadow: 0 6px 24px rgba(99,102,241,.2), inset 0 1px 0 rgba(255,255,255,.3); border-color: var(--primary); z-index: 2; }
+.stat-card.active { transform: scale(1.08) !important; opacity: 1 !important; border-color: var(--primary); box-shadow: 0 6px 24px rgba(99,102,241,.25), inset 0 1px 0 rgba(255,255,255,.3); }
+.dashboard:has(.stat-card.active) .stat-card:not(.active) { transform: scale(0.92); opacity: 0.6; }
+
+/* Dashboard highlight: dim non-matching items */
+.idea-card.dash-dim { opacity: 0.08; transform: scale(0.97); pointer-events: none; transition: all .3s; }
+.idea-card.dash-highlight { opacity: 1; transform: scale(1); transition: all .3s; }
+.list-table tbody tr.dash-dim { display: none; }
+.list-table tbody tr.dash-highlight { opacity: 1; background: rgba(99,102,241,.04); }
+.kanban-column.dash-dim { opacity: 0.2; transform: scale(0.96); transition: all .3s; }
+.kanban-column.dash-highlight { opacity: 1; transform: scale(1); box-shadow: 0 0 0 2px var(--primary); border-radius: var(--radius); transition: all .3s; }

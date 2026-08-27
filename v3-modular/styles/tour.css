@@ -1,0 +1,12 @@
+/* Idea Board — Intro Tour */
+.tour-overlay { display: none; position: fixed; inset: 0; z-index: 5000; }
+.tour-overlay.active { display: block; }
+.tour-overlay::before { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1; }
+.tour-spotlight { position: absolute; z-index: 2; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,.55); transition: all .4s ease; pointer-events: none; }
+.tour-tooltip { position: absolute; z-index: 3; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; max-width: 360px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,.2); transition: all .3s ease; }
+.tour-tooltip-content { margin-bottom: .8rem; }
+.tour-tooltip-content h3 { font-size: 1rem; color: var(--primary); margin-bottom: .4rem; }
+.tour-tooltip-content p { font-size: .82rem; color: var(--text); line-height: 1.6; }
+.tour-tooltip-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.tour-step-indicator { font-size: .7rem; color: var(--text-light); }
+.tour-nav { display: flex; gap: .3rem; }

@@ -1,0 +1,4 @@
+/* Idea Board — Responsive & Print */
+@media (max-width: 1024px) { .kanban { grid-template-columns: repeat(2, 1fr); } .dashboard { flex-wrap: wrap; } }
+@media (max-width: 640px) { .kanban { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } header { flex-direction: column; align-items: flex-start; } .toolbar { flex-direction: column; align-items: stretch; } .dashboard .stat-card { min-width: 80px; } }
+@media print { header, .toolbar, .dashboard { display: none !important; } .kanban { grid-template-columns: repeat(2, 1fr); } .idea-card { break-inside: avoid; } }
