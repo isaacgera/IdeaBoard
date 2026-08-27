@@ -277,3 +277,45 @@ git pushall          # → origin master, then team master:main (triggers Pages 
 - GitLab project paths are case-sensitive; copy the exact URL from the Clone button
 
 ---
+
+## Session 4 — Aug 25, 2026
+**Docs Sync + v3 Migration Exploration + Permission Review**
+
+### What Was Done
+- Committed and pushed the Session 3 documentation updates to both remotes
+  (commit `d8f46b3`) — confirmed present on `origin/master` and `team/main`
+- Updated `userguide.html` with a "Deployment & Hosting (Developer Info)" section
+  (repositories, `git pushall` flow, browser-edit re-sync, runner/token gotchas)
+
+### v3-Modular Migration (explored, not executed)
+- Discussed how to make the v3-modular version the primary served app
+- Key finding: data is safe either way — both versions share the same Firebase DB
+  and localStorage keys (`ib_data`, `ib_user`, `ib_theme`, `ib_tour_done`)
+- Migration is about *which files get served*, not moving data
+- Recommended approach: promote v3 files to root, keep monolith as legacy fallback,
+  and update CI to copy `styles/` and `src/` folders (current CI only copies root files)
+- **Blocked on verification:** could not run v3 locally — no Python or Node.js on the
+  machine (Python is only the MS Store stub). Installed Live Server extension but did
+  not get it running this session.
+- **Decision:** migration on hold until v3 is verified over HTTP
+
+### Permission Review (checked, no change made)
+- Question: can contributors change status of others' ideas?
+- Finding: YES currently — status changes are open to everyone by design
+  ("team collaboration"). Three paths:
+  1. Drag-and-drop — no permission check
+  2. Bulk status change — gated by `canChangeStatus` which returns `true` (anyone)
+  3. Edit form — already owner/admin-only (via `canEdit`)
+- To restrict to owner/admin: change `canChangeStatus` to return `canEdit(idea)` and
+  add a check in the drag drop handler (with a toast on block). Applies to both
+  `app.js` and v3-modular (`auth.js`, `dragdrop.js`, `bulk.js`).
+- **Decision:** left as-is per user request (noted for future reference)
+
+### Session Closed
+- All committed work is live on both remotes; no pending code changes
+- Open follow-ups for a future session:
+  1. Verify v3-modular over HTTP (Live Server "Go Live" button, or install Node/Python)
+  2. If verified, execute the v3 migration (promote to root + CI update)
+  3. Optional: restrict status changes to idea owner/admin
+
+---
