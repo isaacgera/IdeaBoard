@@ -68,10 +68,12 @@ th { background: #f8fafc; font-weight: 600; }
       <li><a href="#audit">Audit Log & Timeline</a></li>
       <li><a href="#tips">Tips & Best Practices</a></li>
       <li><a href="#modular">v3 Modular Version (Developer Info)</a></li>
+      <li><a href="#deployment">Deployment & Hosting (Developer Info)</a></li>
     </ul>
   </div>
 
   <h2 id="getting-started">Getting Started</h2>
+  <p>The Idea Board is hosted on the team's internal GitLab Pages. Open the team Pages URL in your browser — no installation needed. It works on desktop, tablet, and mobile.</p>
   <p>When you first open the Idea Board, you'll be asked to enter your full name. This is mandatory — the app will not proceed until a valid name is entered. Your name identifies you across the team for ideas, comments, and votes.</p>
   <p>A guided tour will automatically walk you through the main features on your first visit. You can replay it anytime by clicking the <strong>Tour</strong> button in the top-right corner.</p>
   <div class="tip"><strong>Tip:</strong> Use your full name so team members know who submitted each idea. Your name cannot be changed later (only admin can rename users).</div>
@@ -325,6 +327,33 @@ th { background: #f8fafc; font-weight: 600; }
     <li><code>src/modules/tour.js</code> — Guided intro tour</li>
   </ul>
   <div class="tip"><strong>For developers:</strong> To add a new feature, create a new module in <code>src/modules/</code>, import it in <code>app.js</code>, and expose any needed functions on <code>window.IB</code>. No other files need to change.</div>
+
+  <h2 id="deployment">Deployment & Hosting (Developer Info)</h2>
+  <p>The app is hosted on the team's internal GitLab Pages and redeploys automatically whenever changes are pushed to the team repository's default branch (<code>main</code>).</p>
+
+  <h3>Repositories</h3>
+  <table>
+    <tr><th>Remote</th><th>Path</th><th>Purpose</th></tr>
+    <tr><td><code>origin</code></td><td>615509493/IdeaBoard</td><td>Personal repository</td></tr>
+    <tr><td><code>team</code></td><td>robt/app02752/IdeaBoard</td><td>Team space (deploys GitLab Pages)</td></tr>
+  </table>
+  <p>The local working branch is <code>master</code>; the team project's default branch is <code>main</code>, so team pushes map <code>master:main</code>.</p>
+
+  <h3>Publishing Changes</h3>
+  <p>After committing, push to both repositories with a single alias:</p>
+  <ul>
+    <li><code>git pushall</code> — pushes to <code>origin</code> (master) then <code>team</code> (master:main)</li>
+  </ul>
+  <p>A push to the team space triggers the GitLab Pages pipeline, which republishes the site within a minute or two.</p>
+
+  <h3>Editing Directly on GitLab</h3>
+  <p>For quick fixes, files can be edited in the browser (<strong>Edit &rarr; Edit single file</strong>, or the <strong>Web IDE</strong> for multiple files). A commit to team <code>main</code> triggers a redeploy. Afterwards, re-sync your local and personal copies to avoid divergence:</p>
+  <ul>
+    <li><code>git pull team main</code></li>
+    <li><code>git push origin master</code></li>
+  </ul>
+
+  <div class="warning"><strong>Deployment gotcha:</strong> GitLab project imports do <em>not</em> carry over CI runner assignments. If the Pages pipeline stays stuck/pending after an import, assign a runner to the project under <strong>Settings &rarr; CI/CD &rarr; Runners</strong>. Also never embed access tokens in git remote URLs — let the OS credential manager hold them.</div>
 
   <div class="tip"><strong>Need help?</strong> Click the <strong>Tour</strong> button in the app header for a guided walkthrough, or contact your admin (Isaac Gera).</div>
 

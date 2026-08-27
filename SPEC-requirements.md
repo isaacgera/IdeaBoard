@@ -145,7 +145,10 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 - No anonymous access (forced name entry)
 - RBAC prevents unauthorized edit/delete
 - Firebase security rules should be configured for production
-- Personal access tokens for GitLab push
+- GitLab push uses personal access tokens
+- Tokens MUST NOT be embedded in git remote URLs — use the OS credential manager
+  (Windows Credential Manager, helper `manager`) instead
+- If a token is ever exposed, revoke and regenerate it immediately
 
 ### NFR-07: Deployment
 - GitHub Pages (public)
@@ -153,6 +156,23 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 - No server infrastructure required
 - v3-modular deploys identically (static files only)
 - Multiple CSS/JS files are fine for internal team use (<15 users); no bundling needed
+
+#### NFR-07a: Team GitLab Space
+- Deployed to the shared team GitLab space: `robt/app02752/IdeaBoard`
+- Default branch: `main` (Pages deploys on push to `main`)
+- CI `pages` job requires a runner assigned to the project
+  (tag `mobius_shared_runner_cloud`)
+- Runner assignments do NOT transfer during a GitLab project import — must be
+  assigned manually in the new project after import
+
+#### NFR-07b: Multi-Remote Workflow
+- Two git remotes maintained:
+  - `origin` → `615509493/IdeaBoard` (personal)
+  - `team`   → `robt/app02752/IdeaBoard` (team, deploys Pages)
+- Local branch `master` maps to team `main` on push (`master:main`)
+- `git pushall` alias pushes to both remotes in one command
+- Direct in-browser GitLab edits require a follow-up `git pull team main` to keep
+  local and personal repos in sync
 
 ### NFR-08: Code Maintainability (v3-modular)
 - Each module has a single responsibility

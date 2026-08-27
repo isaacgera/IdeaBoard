@@ -204,3 +204,76 @@ v3-modular/
 - Kiro performed the full extraction autonomously
 
 ---
+
+## Session 3 — Aug 25, 2026
+**Team GitLab Migration + Pages Deployment + Multi-Remote Setup**
+
+### Goal
+Migrate the project into the team's shared internal GitLab space, get GitLab Pages deploying there, and set up a clean dual-remote workflow (personal + team).
+
+### What Was Done
+
+#### Migration
+- Imported the project from the personal GitLab space into the shared team space via GitLab's project import (server-side, not a manual copy)
+- Team project path: `robt/app02752/IdeaBoard`
+- Personal project path: `615509493/IdeaBoard`
+- Default branch in the team project is `main`; local working branch is `master`
+
+#### GitLab Pages Deployment (Troubleshooting)
+- **Symptom:** Deploy → Pages showed the "Get started with GitLab Pages" wizard; Pages not live
+- **Investigation path:**
+  1. Confirmed runner `mobius_shared_runner_cloud` (#2, cfTvY6bY) showed online (green) in the project runner list
+  2. Confirmed local top commit matched the team pipeline commit — CI file in sync
+  3. Found the latest pipeline was **stuck** with the `pages` job pending
+  4. Clicked into the stuck `pages` job — message: *"This job is stuck because the project doesn't have any runners online assigned to it"*
+- **Root cause:** Runner assignments do NOT transfer during a GitLab project import. The runner was visible/online but **not assigned to the new team project**. This is the classic cross-space import trap.
+- **Fix:** Assigned/enabled a runner for the team project (Settings → CI/CD → Runners)
+- **Result:** Re-ran pipeline on `main` → `pages` job green → `pages:deploy` green → Pages went live
+
+#### Security — Leaked Token Remediation
+- During diagnosis, `git remote -v` revealed a personal access token (`glpat-...`) embedded in the remote URL (stored in plaintext in `.git/config`)
+- **Actions taken:**
+  1. Revoked the exposed token in GitLab (Preferences → Access Tokens)
+  2. Generated a new personal access token
+  3. Removed the token from the remote URL (git now uses Windows Credential Manager, helper = `manager`)
+- **Lesson:** Never embed tokens in remote URLs. Let the OS credential manager hold them.
+
+#### Multi-Remote Setup
+- Configured two token-free remotes:
+  - `origin` → `https://gitlab.prod.ec.devops.nat.bt.com/615509493/IdeaBoard.git` (personal)
+  - `team`   → `https://gitlab.prod.ec.devops.nat.bt.com/robt/app02752/IdeaBoard.git` (team, deploys Pages)
+- **Path gotcha:** The team URL was initially wrong (guessed `APP02752_MQ/IdeaBoard`). Actual path is lowercase and nested: `robt/app02752/IdeaBoard`. GitLab paths are case-sensitive and can differ from display names — always copy from the Clone button.
+- **Branch mapping:** Team push uses `master:main` (local `master` → remote `main`) so it lands on the Pages-deploying branch.
+
+#### Convenience Alias
+- Added a global git alias for pushing to both spaces in one command:
+  ```
+  git config --global alias.pushall "!git push origin master && git push team master:main"
+  ```
+- Usage: `git pushall` (pushes to personal, then team if personal succeeds)
+
+### Everyday Workflow (established this session)
+```
+git add <files>
+git commit -m "Describe your change"
+git pushall          # → origin master, then team master:main (triggers Pages redeploy)
+```
+
+### Direct GitLab Editing (guidance discussed)
+- Files can be edited in-browser via **Edit → Edit single file** or the **Web IDE** (multi-file)
+- A direct commit to team `main` triggers the Pages pipeline like a normal push
+- **Caveat:** Browser edits only land in the team space — local repo and personal repo fall behind
+- Re-sync after a browser edit:
+  ```
+  git pull team main
+  git push origin master
+  ```
+- For non-trivial changes, prefer local editing + `git pushall` to keep all three copies (local, personal, team) aligned
+
+### Key Learnings
+- GitLab project import copies code + history + CI file, but NOT runner assignments or feature toggles
+- A runner showing "online" in a list is not the same as "assigned to this project"
+- A green runner / green pipeline can still hide a stuck job — always click into the job to read its status
+- GitLab project paths are case-sensitive; copy the exact URL from the Clone button
+
+---
