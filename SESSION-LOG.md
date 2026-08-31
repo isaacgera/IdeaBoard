@@ -3,7 +3,7 @@
 ## Project Info
 - **App Name:** Idea Board
 - **Team:** Architecture Middleware Integration Team
-- **Location:** `C:\Users\615509493\OneDrive - BT Plc\Data Drive\Personal\Learning\Kiro\Projects\Idea Board\`
+- **Location:** `C:\Users\615509493\OneDrive - BT Plc\Data Drive\Personal\Learning\Kiro\Projects\Productivity\Idea Board\` (moved into `Productivity/` on 30 Aug 2026)
 - **AI Partner:** Kiro
 - **Live URLs:**
   - GitHub Pages: `https://isaacgera.github.io/IdeaBoard/ideaboard.html`
@@ -319,3 +319,22 @@ git pushall          # → origin master, then team master:main (triggers Pages 
   3. Optional: restrict status changes to idea owner/admin
 
 ---
+
+## Housekeeping — Aug 30, 2026: Folder relocation
+
+Moved the project folder from `Projects/Idea Board/` into `Projects/Productivity/Idea Board/`
+to group it under a new **Productivity** category folder (matching its category in the Ideas
+backlog). The entire repository was moved intact — including the `.git` folder, `.gitignore`,
+and `.gitlab-ci.yml`.
+
+### Impact: none on either GitLab location
+- Both remotes preserved and verified working from the new path:
+  - `origin` → `gitlab.prod.ec.devops.nat.bt.com/615509493/IdeaBoard.git` (personal)
+  - `team`   → `gitlab.prod.ec.devops.nat.bt.com/robt/app02752/IdeaBoard.git` (team, deploys Pages)
+- Full commit history, `master` branch, remote-tracking refs, and CI file all intact.
+  Verified via `git remote -v`, `git status`, `git log`, and `git rev-parse HEAD` in the new location.
+- A local folder move does not touch GitLab's servers, the CI pipeline, or the `git pushall`
+  workflow — everything works exactly as before from the new path. Purely local disk tidying.
+- Note: the two hosted locations are both **BT GitLab** (personal + shared team space),
+  not GitHub. (The GitHub Pages URL noted in Project Info is a separate public mirror if used;
+  this local clone only has the two GitLab remotes.)
