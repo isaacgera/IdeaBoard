@@ -338,3 +338,40 @@ and `.gitlab-ci.yml`.
 - Note: the two hosted locations are both **BT GitLab** (personal + shared team space),
   not GitHub. (The GitHub Pages URL noted in Project Info is a separate public mirror if used;
   this local clone only has the two GitLab remotes.)
+
+## Session 5 — Aug 30, 2026: Added GitHub as a third remote (3-way sync)
+
+### Goal
+Host Idea Board on GitHub in addition to the two GitLab spaces, and make every push go to all three.
+
+### What Was Done
+- Added a `github` remote → `https://github.com/isaacgera/IdeaBoard.git` (repo already existed).
+- **Fetched first** to inspect it: GitHub held a stale, diverged history (v1.2-era `main` with
+  `Create CNAME`/`Delete CNAME`; local was 18 ahead / 2 behind). Confirmed no CNAME/custom-domain
+  file remained in `github/main`, so nothing was lost.
+- **Force-pushed** `master:main` to GitHub (Option A) so its `main` now matches the current
+  local/GitLab state (`a5cfd82`). All three remotes are now aligned on the same commit.
+- Updated the global `pushall` alias to push to all three:
+  ```
+  git config --global alias.pushall "!git push origin master && git push team master:main && git push github master:main"
+  ```
+
+### The three remotes
+- `origin` → `gitlab.prod.ec.devops.nat.bt.com/615509493/IdeaBoard.git` (personal GitLab)
+- `team`   → `gitlab.prod.ec.devops.nat.bt.com/robt/app02752/IdeaBoard.git` (team GitLab, deploys Pages)
+- `github` → `github.com/isaacgera/IdeaBoard.git` (public GitHub, GitHub Pages)
+
+### Everyday workflow (unchanged command, now hits all three)
+```
+git add <files>
+git commit -m "Describe your change"
+git pushall     # → origin master, team master:main, github master:main
+```
+
+### Notes / gotchas
+- `pushall` is fail-fast (`&&`): if an earlier push fails, later ones don't run. Push the
+  remaining remotes individually if one is temporarily unavailable.
+- GitHub's `main` was overwritten from v1.2 → current, so the GitHub Pages site
+  (`isaacgera.github.io/IdeaBoard`) will redeploy with the current app. Confirm Pages is set
+  to serve from `main` in the GitHub repo settings.
+- GitHub credentials are now cached in Windows Credential Manager alongside GitLab.
