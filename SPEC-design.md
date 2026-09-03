@@ -293,7 +293,10 @@ App
 - CI config: `.gitlab-ci.yml`
 - Runner tag: `mobius_shared_runner_cloud`
 - Image: `alpine:latest`
-- Script: `mkdir public && cp *.html *.js *.json public/`
+- Script: `mkdir public && cp *.html *.js *.json *.png public/`
+- **Important:** the `cp` glob must include every static file extension the app uses.
+  If a new type is added (e.g. `.svg`, `.webp`), extend the glob — otherwise the asset
+  deploys on GitHub Pages (serves whole folder) but silently 404s on GitLab Pages.
 - Git proxy: `http://127.0.0.1:9000`
 
 ## PWA / Offline Design (added v2.4.x — root monolith)

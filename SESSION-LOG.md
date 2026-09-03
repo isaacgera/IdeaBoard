@@ -477,3 +477,23 @@ Lighthouse 100 along the way, plus a few UX fixes raised during testing.
 
 ### Version
 - v2.3 → **v2.4.6**
+
+### Addendum — Sep 3, 2026 (same session, post-deploy)
+**GitLab Pages: missing PNG assets (header icon + PWA icons)**
+
+After deploying v2.4.6, the header brand icon (`icon-192.png`) was missing on the
+GitLab Pages site (worked on GitHub Pages and Live Server). Root cause: the CI
+`.gitlab-ci.yml` `pages` job only copied `*.html *.js *.json` into `public/` — no
+`*.png` files were published. This also meant the PWA manifest icons and screenshots
+were 404-ing on GitLab.
+
+**Fix:** added `*.png` to the `cp` line in `.gitlab-ci.yml`:
+```
+cp *.html *.js *.json *.png public/
+```
+Note: this also copies the unused `ideaboard.png` (old wooden-blocks banner) — harmless,
+a few extra KB. Clean it up in a future tidy pass if desired.
+
+**Gotcha to remember:** whenever a new static asset type is added (e.g. `.svg`, `.webp`),
+the CI copy glob must be extended, otherwise it deploys on GitHub but silently 404s on
+GitLab Pages.
