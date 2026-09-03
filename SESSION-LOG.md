@@ -375,3 +375,105 @@ git pushall     # → origin master, team master:main, github master:main
   (`isaacgera.github.io/IdeaBoard`) will redeploy with the current app. Confirm Pages is set
   to serve from `main` in the GitHub repo settings.
 - GitHub credentials are now cached in Windows Credential Manager alongside GitLab.
+
+## Session 6 — Sep 3, 2026
+**PWA Layer + Accessibility Pass + Fixes (v2.3 → v2.4.6)**
+
+### Goal
+Address the PWA Readiness Checker findings — the app had no PWA layer at all. Make
+Idea Board installable with offline app-shell support, applied to the **live root
+monolith** (not v3-modular, which stays on hold). Accessibility hardened to
+Lighthouse 100 along the way, plus a few UX fixes raised during testing.
+
+### What Was Done
+
+#### PWA layer (new)
+- **manifest.json**: name, `start_url: ./ideaboard.html`, `scope: ./`,
+  `display: standalone`, theme `#6366f1`, background `#f8fafc`, 3 icons
+  (192, 512, 512-maskable) + 2 screenshots (wide/narrow) for richer install UI.
+- **sw.js**: cache `ideaboard-shell-v2.4.6`; precaches app shell (ideaboard.html,
+  app.js?v=2.4.6, manifest, icons, screenshots); activate-cleanup of old caches;
+  navigation fallback; stale-while-revalidate for same-origin assets. Firebase
+  (Realtime DB + gstatic CDN SDK) and /favicon.ico deliberately bypassed.
+- **make_icons.py**: pure standard-library PNG generator (no Pillow, no network) —
+  chosen because pip is blocked by the corporate Zscaler SSL cert and Pillow isn't
+  installed. Generates the 3 icons + 2 screenshots. Icon = indigo tile + outline
+  lightbulb + amber filament dot.
+- **ideaboard.html**: manifest link, theme-color, description, icon +
+  apple-touch-icon, `mobile-web-app-capable` + apple metas, SW registration
+  (guarded off file://).
+- **app.js**: added `APP_VERSION` constant (none existed before) + changelog block.
+
+#### Offline story (decided)
+- Cache the **app shell only**. Firebase is NOT cached — requests hit the network and,
+  when offline/blocked, the app falls back to its existing localStorage behaviour.
+  Live DB data is never cached.
+
+#### Accessibility (Lighthouse 80 → 100)
+- ARIA labels on all previously-unlabeled controls: theme toggle, search box, filter
+  selects, bulk-action selects, list checkboxes, modal close buttons, comment box,
+  new-category input, import input, vote buttons.
+- `online-count` changed from clickable <span> to real <button> (keyboard access).
+- View toggle: `role="group"` + `aria-pressed` (kept in sync in setView).
+- Idea-form `<label>`s associated to inputs via `for=`.
+- Added `<main>` landmark (fixed Best Practices "no main landmark").
+- Dashboard stat cards: `role="button"` + `tabindex="0"` + labels + tooltips, plus a
+  global Enter/Space keydown handler and a visible focus outline.
+- Sortable table headers: `scope="col"`, `aria-sort`, tooltips.
+- WCAG-AA contrast fixes: `--primary` darkened `#6366f1 → #4f46e5`; status/priority
+  badge backgrounds moved to 600/700/800 shades so white text clears 4.5:1;
+  `--text-light` darkened `#64748b → #475569`.
+- Added `mobile-web-app-capable` meta (cleared the deprecation warning).
+
+#### Tooltips + ARIA polish
+- `title` tooltips across header/toolbar controls, stat cards, sortable headers,
+  vote buttons; `aria-pressed` on vote buttons; avatar marked `aria-hidden`.
+
+#### Fixes raised during testing
+- **Manage Users dedupe (Option B, non-destructive):** users are keyed by random
+  per-session ids, so the same person could appear multiple times. Added
+  `getDedupedUsers()` (case-insensitive, trimmed name grouping; genuine spelling
+  differences stay separate) and `idsForSameName()`; Manage Users now renders one
+  row per name with a `(N×)` merged hint, and promote/demote/edit/delete act on all
+  ids sharing the name. **Root-cause fix (name-keyed identity + data migration)
+  deferred as a Quick Spec follow-up — Option A.**
+- **Manage Data layout:** Categories section moved to the bottom of the modal and
+  rendered as horizontal wrapping chips (was one-per-row).
+- **Icon unification:** header brand icon now uses `icon-192.png` directly (same file
+  as the browser tab), so the two can never drift. Removed the old inline SVG bulb
+  and the gradient background on `.brand-icon`.
+
+### Verification (Edge DevTools via Live Server) — PASSED
+- Lighthouse: **Performance 100, Accessibility 100, Best Practices 100, SEO 100**.
+- Manifest: parsed clean, no errors/warnings.
+- Service worker: activated and running, controlling ideaboard.html.
+- Offline (Network=Offline, not Lighthouse): shell served from SW cache
+  ("fulfilled by sw.js"); Firebase ws fails as designed → localStorage.
+- Icons confirmed matching (header == tab), Manage Data categories confirmed.
+
+### Environment Notes
+- `execute_pwsh` was unreliable all session (exit 1, garbled/stale echoed output) —
+  the same Windows shell quirk noted in the Agent Toolkit session. All image
+  generation and verification were done in Isaac's own terminal (worked cleanly).
+- pip blocked by Zscaler SSL interception (`CERTIFICATE_VERIFY_FAILED`) — hence the
+  no-dependency icon generator.
+
+### Follow-ups
+- **Commit + `git pushall`** (origin, team, github) to redeploy all three Pages sites.
+  Suggested message: "PWA layer + a11y pass (v2.4.6): manifest, SW, icons, ARIA +
+  WCAG-AA, Lighthouse 100; Manage Users dedupe; Manage Data + icon tidy".
+- **Option A (proper name-keyed user identity + Firebase data migration)** — own
+  Quick Spec, needs a data backup first.
+- Optional: swap placeholder manifest screenshots for real screen grabs (same
+  filenames/sizes, no code change).
+- Optional: surface APP_VERSION in the UI (header/About).
+- **v3-modular is now behind:** ALL of this session's work landed on the root
+  monolith only. Before v3-modular could ever ship, every Session 6 change (PWA,
+  accessibility, dedupe, tooltips/ARIA, Manage Data reorder, icon unification,
+  version bump) must be ported into its module/CSS structure and re-verified
+  (Lighthouse 100 + offline). Tracked as **SPEC-tasks TASK-02**. Do it as its own
+  Quick Spec when v3 is promoted, not a hurried copy.
+- Ideas.md left unchanged this session (per Isaac's instruction).
+
+### Version
+- v2.3 → **v2.4.6**

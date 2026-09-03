@@ -296,6 +296,61 @@ App
 - Script: `mkdir public && cp *.html *.js *.json public/`
 - Git proxy: `http://127.0.0.1:9000`
 
+## PWA / Offline Design (added v2.4.x — root monolith)
+
+### Files
+- `manifest.json` — web app manifest (name, start_url `./ideaboard.html`, scope `./`,
+  standalone display, theme/background colours, icon set, screenshots).
+- `sw.js` — service worker (app-shell cache).
+- `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` — app icons.
+- `screenshot-wide.png` (1280x720), `screenshot-narrow.png` (720x1280) — install UI.
+- `make_icons.py` — regenerates all icons + screenshots using only the Python
+  standard library (no Pillow, no network — required on the locked-down corporate
+  machine where pip is blocked by Zscaler SSL interception).
+
+### Caching strategy
+```
+install  → precache app shell (ideaboard.html, app.js?v=…, manifest, icons, screenshots)
+activate → delete old ideaboard-shell-* caches (keyed by CACHE_VERSION)
+fetch:
+  - bypass entirely: gstatic.com, *firebase*, googleapis.com, /favicon.ico, cross-origin
+  - navigation requests → network, fall back to cached ./ideaboard.html
+  - same-origin assets → stale-while-revalidate
+```
+Firebase (Realtime DB + CDN SDK) is intentionally never cached; offline the app uses
+its existing localStorage fallback. `CACHE_VERSION` is bumped on every release so
+clients pick up new assets cleanly.
+
+### Icon source-of-truth
+The header brand icon (`.brand-icon img`) and the browser tab/installed icon both
+reference the **same** `icon-192.png`, so they cannot visually drift. (Earlier the
+header used a separate inline SVG, which caused a mismatch — removed in v2.4.6.)
+
+### Versioning
+A single `APP_VERSION` constant in `app.js` is the source of truth, kept in sync with
+the `app.js?v=` cache-buster and the service-worker `CACHE_VERSION`.
+
+### Applies to the root monolith only — v3-modular NOT yet synced
+The PWA layer, accessibility hardening, Manage Users dedupe, tooltips/ARIA, Manage
+Data reorder, and icon unification (all v2.4.x, Session 6) were applied **only to the
+root monolith** (`ideaboard.html` + `app.js`). The `v3-modular/` version does not have
+them and is therefore behind. If v3-modular is ever promoted to the served app, these
+changes must be ported into its module/CSS structure and re-verified. Tracked as
+**SPEC-tasks TASK-02**.
+
+## User Management — Dedupe (v2.4.6, display-layer / Option B)
+
+Users are keyed by a random per-session id (`generateId()` in `promptUser`), so the
+same person can hold multiple `/users/{id}` records (different devices, cleared
+storage, case variations). Manage Users now collapses records by case-insensitive,
+trimmed name for display (`getDedupedUsers()`), and role actions resolve every id
+sharing that name (`idsForSameName()`). Genuinely different spellings remain separate.
+This is a non-destructive display fix; the underlying duplicate records still exist.
+
+**Planned follow-up (Option A, not yet done):** derive the user id deterministically
+from the normalised name so duplicates never form, with a one-off Firebase data
+migration to merge existing records. Deferred to its own Quick Spec (needs a backup).
+
 ## CSS Architecture
 
 ### Original (v2.3): Single inline `<style>` block in HTML (~260 lines)

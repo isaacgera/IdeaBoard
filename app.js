@@ -1,7 +1,20 @@
-// Idea Board - App Logic v1.3 (Aug 24, 2026)
-// v1.3: RBAC - Admin (Isaac) has full privileges, contributors can only edit/delete own ideas
+// Idea Board - App Logic
+// Changelog:
+//   v2.4.6 (Sep 3, 2026): PWA layer added (manifest, service worker, icons) for
+//           installability + offline app-shell. Firebase intentionally not cached;
+//           app falls back to localStorage when offline/blocked. Added APP_VERSION.
+//           Accessibility pass to Lighthouse 100 (ARIA labels on all controls,
+//           <main> landmark, WCAG-AA badge/primary contrast). Manifest screenshots.
+//           Tooltips + ARIA across tabs/cards/table: stat cards keyboard-activatable
+//           (role=button + Enter/Space), sortable headers get aria-sort, vote
+//           buttons labelled, Manage Users deduped by case-insensitive name.
+//   v2.3   : UI polish (header, dashboard, Manage Data modal, online badge).
+//   v1.3   : RBAC - Admin (Isaac) full privileges; contributors edit/delete own only.
 (function() {
 'use strict';
+
+// Single source of truth for the app version (semantic versioning).
+var APP_VERSION = '2.4.6';
 
 var firebaseConfig = {
   apiKey: "AIzaSyDhHQAxUU-Dsvh6seA5USQugR7nCHvwnSI",
@@ -47,6 +60,20 @@ function init() {
   renderCategoryFilter();
   render();
   setupDragListeners();
+  setupKeyboardActivation();
+}
+
+// Let keyboard users activate role="button" elements (e.g. dashboard stat cards)
+// with Enter or Space, matching native button behaviour.
+function setupKeyboardActivation() {
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var el = e.target;
+    if (el && el.getAttribute && el.getAttribute('role') === 'button' && el.hasAttribute('tabindex')) {
+      e.preventDefault();
+      el.click();
+    }
+  });
 }
 
 function initFirebase() {
@@ -195,31 +222,28 @@ function loadUsers() {
 
 function promoteUser(userId) {
   if (!isAdmin()) { showToast('Only admins can promote users'); return; }
-  if (state.firebaseReady) {
-    db.ref('users/' + userId + '/role').set('admin');
-    showToast('User promoted to admin');
-  } else {
-    state.users[userId].role = 'admin';
-    showToast('User promoted to admin');
-  }
+  // Apply to all records sharing this name so merged duplicates stay consistent.
+  idsForSameName(userId).forEach(function(uid) {
+    if (state.firebaseReady) { db.ref('users/' + uid + '/role').set('admin'); }
+    if (state.users[uid]) state.users[uid].role = 'admin';
+  });
+  showToast('User promoted to admin');
   showManageUsers();
 }
 
 function demoteUser(userId) {
   if (!isAdmin()) { showToast('Only admins can demote users'); return; }
-  if (state.firebaseReady) {
-    db.ref('users/' + userId + '/role').set('contributor');
-    showToast('User demoted to contributor');
-  } else {
-    state.users[userId].role = 'contributor';
-    showToast('User demoted to contributor');
-  }
+  idsForSameName(userId).forEach(function(uid) {
+    if (state.firebaseReady) { db.ref('users/' + uid + '/role').set('contributor'); }
+    if (state.users[uid]) state.users[uid].role = 'contributor';
+  });
+  showToast('User demoted to contributor');
   showManageUsers();
 }
 
 function showOnlineUsers() {
   if (!isAdmin()) return;
-  var html = '<div class="modal-header"><h2>Online Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  var html = '<div class="modal-header"><h2>Online Users</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html += '<div class="modal-body">';
 
   if (state.firebaseReady && state.onlineUsers) {
@@ -250,26 +274,52 @@ function showOnlineUsers() {
   showModal(html);
 }
 
+// Collapse user records that share the same name (case-insensitive, trimmed) into
+// one logical user. Random per-session ids mean the same person can hold several
+// records; this dedupes them for display and lets row actions target every
+// matching id. Genuinely different spellings remain separate entries (by design).
+function getDedupedUsers() {
+  var groups = {}; // normalisedName -> { name, role, lastSeen, ids: [] }
+  Object.keys(state.users).forEach(function(uid) {
+    var u = state.users[uid] || {};
+    var displayName = (u.name || 'Unknown').trim();
+    var key = displayName.toLowerCase();
+    if (!groups[key]) {
+      groups[key] = { name: displayName, role: u.role || 'contributor', lastSeen: u.lastSeen || 0, ids: [] };
+    }
+    var g = groups[key];
+    g.ids.push(uid);
+    // Prefer the admin role if any duplicate has it.
+    if (u.role === 'admin') g.role = 'admin';
+    // Keep the most recently seen display name/timestamp.
+    if ((u.lastSeen || 0) >= g.lastSeen) { g.lastSeen = u.lastSeen || 0; if (u.name) g.name = displayName; }
+  });
+  return Object.keys(groups).map(function(k) { return groups[k]; })
+    .sort(function(a, b) { return a.name.toLowerCase().localeCompare(b.name.toLowerCase()); });
+}
+
 function showManageUsers() {
   if (!isAdmin()) { showToast('Admin access required'); return; }
-  var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html += '<div class="modal-body">';
-  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Manage team members. Edit renames the user (and remaps their ideas). Delete removes the user (their ideas transfer to admin). Hardcoded admin (' + ADMIN_NAMES.join(', ') + ') cannot be modified.</p>';
+  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Manage team members. Entries are grouped by name (case-insensitive). Edit renames the user (and remaps their ideas). Delete removes the user (their ideas transfer to admin). Hardcoded admin (' + ADMIN_NAMES.join(', ') + ') cannot be modified.</p>';
 
-  var userIds = Object.keys(state.users);
-  if (!userIds.length) {
+  var groups = getDedupedUsers();
+  if (!groups.length) {
     html += '<p style="font-size:.82rem;color:var(--text-light)">No users registered yet. Users appear here after they access the board.</p>';
   } else {
     html += '<div style="margin-bottom:.5rem">';
-    userIds.forEach(function(uid) {
-      var u = state.users[uid];
-      var isHardcoded = ADMIN_NAMES.indexOf((u.name || '').toLowerCase()) !== -1;
-      var roleLabel = u.role === 'admin' ? '<span style="color:var(--primary);font-weight:600">Admin</span>' : '<span style="color:var(--text-light)">Contributor</span>';
+    groups.forEach(function(g) {
+      var isHardcoded = ADMIN_NAMES.indexOf(g.name.toLowerCase()) !== -1;
+      var roleLabel = g.role === 'admin' ? '<span style="color:var(--primary);font-weight:600">Admin</span>' : '<span style="color:var(--text-light)">Contributor</span>';
+      // Representative id for actions; handlers resolve all ids sharing this name.
+      var uid = g.ids[0];
+      var dupNote = g.ids.length > 1 ? ' <span style="font-size:.62rem;color:var(--text-light)" title="' + g.ids.length + ' records merged">(' + g.ids.length + '\u00d7)</span>' : '';
       html += '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;flex-wrap:wrap">';
-      html += '<span style="flex:1;font-size:.82rem;font-weight:500;min-width:100px">' + escapeHtml(u.name || 'Unknown') + '</span>';
+      html += '<span style="flex:1;font-size:.82rem;font-weight:500;min-width:100px">' + escapeHtml(g.name || 'Unknown') + dupNote + '</span>';
       html += '<span style="font-size:.72rem">' + roleLabel + '</span>';
       if (!isHardcoded) {
-        if (u.role === 'admin') {
+        if (g.role === 'admin') {
           html += '<button class="btn btn-sm" onclick="IB.demoteUser(\'' + uid + '\')">Demote</button>';
         } else {
           html += '<button class="btn btn-sm btn-primary" onclick="IB.promoteUser(\'' + uid + '\')">Promote</button>';
@@ -288,6 +338,15 @@ function showManageUsers() {
   showModal(html);
 }
 
+// Resolve every user id that shares the same (case-insensitive) name as the given id.
+function idsForSameName(userId) {
+  var target = ((state.users[userId] || {}).name || '').trim().toLowerCase();
+  if (!target) return [userId];
+  return Object.keys(state.users).filter(function(uid) {
+    return ((state.users[uid] || {}).name || '').trim().toLowerCase() === target;
+  });
+}
+
 function editUser(userId) {
   if (!isAdmin()) { showToast('Admin access required'); return; }
   var user = state.users[userId];
@@ -297,12 +356,11 @@ function editUser(userId) {
   if (!newName || !newName.trim() || newName.trim() === oldName) return;
   newName = newName.trim();
 
-  // Update user record
-  if (state.firebaseReady) {
-    db.ref('users/' + userId + '/name').set(newName);
-  } else {
-    state.users[userId].name = newName;
-  }
+  // Update every user record sharing the old name (dedupe-aware rename).
+  idsForSameName(userId).forEach(function(uid) {
+    if (state.firebaseReady) { db.ref('users/' + uid + '/name').set(newName); }
+    if (state.users[uid]) state.users[uid].name = newName;
+  });
 
   // Remap all ideas from old name to new name
   Object.keys(state.ideas).forEach(function(id) {
@@ -351,13 +409,15 @@ function deleteUser(userId) {
     }
   });
 
-  // Remove user record
-  if (state.firebaseReady) {
-    db.ref('users/' + userId).remove();
-    db.ref('presence/' + userId).remove();
-  } else {
-    delete state.users[userId];
-  }
+  // Remove every user record sharing this name (dedupe-aware delete).
+  idsForSameName(userId).forEach(function(uid) {
+    if (state.firebaseReady) {
+      db.ref('users/' + uid).remove();
+      db.ref('presence/' + uid).remove();
+    } else {
+      delete state.users[uid];
+    }
+  });
 
   showToast('User "' + userName + '" deleted. Ideas reassigned to ' + adminName);
   if (!state.firebaseReady) render();
@@ -515,14 +575,16 @@ function renderDashboard() {
   var topContrib = ''; var topCount = 0;
   Object.keys(bySubmitter).forEach(function(name) { if (bySubmitter[name] > topCount) { topCount = bySubmitter[name]; topContrib = name; }});
 
+  // Stat cards are clickable filters. role=button + tabindex make them keyboard
+  // reachable; a global keydown handler (see init) activates on Enter/Space.
   var html = '<div class="dashboard" id="dashboard-bar">';
-  html += '<div class="stat-card clickable" onclick="IB.dashFilter(\'all\')" onmouseenter="IB.dashHover(\'all\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + total + '</span><span class="stat-label">Total Ideas</span></div>';
-  html += '<div class="stat-card stat-new clickable" onclick="IB.dashFilter(\'status\',\'New\')" onmouseenter="IB.dashHover(\'status\',\'New\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['New'] + '</span><span class="stat-label">New</span></div>';
-  html += '<div class="stat-card stat-progress clickable" onclick="IB.dashFilter(\'status\',\'In Progress\')" onmouseenter="IB.dashHover(\'status\',\'In Progress\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['In Progress'] + '</span><span class="stat-label">In Progress</span></div>';
-  html += '<div class="stat-card stat-review clickable" onclick="IB.dashFilter(\'status\',\'Review\')" onmouseenter="IB.dashHover(\'status\',\'Review\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['Review'] + '</span><span class="stat-label">In Review</span></div>';
-  html += '<div class="stat-card stat-done clickable" onclick="IB.dashFilter(\'status\',\'Done\')" onmouseenter="IB.dashHover(\'status\',\'Done\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['Done'] + '</span><span class="stat-label">Done</span></div>';
-  html += '<div class="stat-card clickable" onclick="IB.dashFilter(\'month\')" onmouseenter="IB.dashHover(\'month\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + thisMonth + '</span><span class="stat-label">This Month</span></div>';
-  html += '<div class="stat-card clickable" onclick="IB.dashFilter(\'submitter\',\'' + escapeAttr(topContrib) + '\')" onmouseenter="IB.dashHover(\'submitter\',\'' + escapeAttr(topContrib) + '\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + escapeHtml(topContrib) + '</span><span class="stat-label">Top Contributor</span></div>';
+  html += '<div class="stat-card clickable" role="button" tabindex="0" aria-label="Show all ideas" title="Click to show all ideas" onclick="IB.dashFilter(\'all\')" onmouseenter="IB.dashHover(\'all\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + total + '</span><span class="stat-label">Total Ideas</span></div>';
+  html += '<div class="stat-card stat-new clickable" role="button" tabindex="0" aria-label="Filter to New ideas" title="Click to filter to New ideas" onclick="IB.dashFilter(\'status\',\'New\')" onmouseenter="IB.dashHover(\'status\',\'New\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['New'] + '</span><span class="stat-label">New</span></div>';
+  html += '<div class="stat-card stat-progress clickable" role="button" tabindex="0" aria-label="Filter to In Progress ideas" title="Click to filter to In Progress ideas" onclick="IB.dashFilter(\'status\',\'In Progress\')" onmouseenter="IB.dashHover(\'status\',\'In Progress\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['In Progress'] + '</span><span class="stat-label">In Progress</span></div>';
+  html += '<div class="stat-card stat-review clickable" role="button" tabindex="0" aria-label="Filter to In Review ideas" title="Click to filter to In Review ideas" onclick="IB.dashFilter(\'status\',\'Review\')" onmouseenter="IB.dashHover(\'status\',\'Review\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['Review'] + '</span><span class="stat-label">In Review</span></div>';
+  html += '<div class="stat-card stat-done clickable" role="button" tabindex="0" aria-label="Filter to Done ideas" title="Click to filter to Done ideas" onclick="IB.dashFilter(\'status\',\'Done\')" onmouseenter="IB.dashHover(\'status\',\'Done\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + byStat['Done'] + '</span><span class="stat-label">Done</span></div>';
+  html += '<div class="stat-card clickable" role="button" tabindex="0" aria-label="Filter to ideas added this month" title="Click to filter to ideas added this month" onclick="IB.dashFilter(\'month\')" onmouseenter="IB.dashHover(\'month\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + thisMonth + '</span><span class="stat-label">This Month</span></div>';
+  html += '<div class="stat-card clickable" role="button" tabindex="0" aria-label="Filter to top contributor\'s ideas" title="Click to filter to this contributor\'s ideas" onclick="IB.dashFilter(\'submitter\',\'' + escapeAttr(topContrib) + '\')" onmouseenter="IB.dashHover(\'submitter\',\'' + escapeAttr(topContrib) + '\')" onmouseleave="IB.dashHoverEnd()"><span class="stat-number">' + escapeHtml(topContrib) + '</span><span class="stat-label">Top Contributor</span></div>';
   html += '</div>';
   return html;
 }
@@ -744,9 +806,9 @@ function renderCard(idea) {
       '<div class="card-actions">' +
         (commentCount ? '<span class="card-comment-count" title="' + commentCount + ' comments">&#128172; ' + commentCount + '</span>' : '') +
         '<span class="vote-widget">' +
-          '<button class="vote-btn up' + (uv===1?' active':'') + '" onclick="IB.upvote(\'' + idea.id + '\',event)" title="Upvote">&#9650;</button>' +
-          '<span class="vote-score' + (score>0?' positive':'') + (score<0?' negative':'') + '">' + score + '</span>' +
-          '<button class="vote-btn down' + (uv===-1?' active':'') + '" onclick="IB.downvote(\'' + idea.id + '\',event)" title="Downvote">&#9660;</button>' +
+          '<button class="vote-btn up' + (uv===1?' active':'') + '" onclick="IB.upvote(\'' + idea.id + '\',event)" title="Upvote" aria-label="Upvote" aria-pressed="' + (uv===1?'true':'false') + '">&#9650;</button>' +
+          '<span class="vote-score' + (score>0?' positive':'') + (score<0?' negative':'') + '" title="Vote score">' + score + '</span>' +
+          '<button class="vote-btn down' + (uv===-1?' active':'') + '" onclick="IB.downvote(\'' + idea.id + '\',event)" title="Downvote" aria-label="Downvote" aria-pressed="' + (uv===-1?'true':'false') + '">&#9660;</button>' +
         '</span>' +
       '</div>' +
     '</div>' +
@@ -757,6 +819,11 @@ function renderListHtml() {
   var ideas = getFilteredIdeas();
   var sortCol = state.sort.column, sortDir = state.sort.direction;
   function si(col) { if (sortCol!==col) return ' <span class="sort-icon">&#8597;</span>'; return sortDir==='asc'?' <span class="sort-icon active">&#9650;</span>':' <span class="sort-icon active">&#9660;</span>'; }
+  // aria-sort + tooltip for a sortable column header.
+  function sortAttrs(col, label) {
+    var aria = sortCol === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+    return ' scope="col" aria-sort="' + aria + '" title="Sort by ' + label + '"';
+  }
 
   var selCount = state.selectedIds.length;
   var html = '';
@@ -771,13 +838,13 @@ function renderListHtml() {
 
     html += '<div class="bulk-bar">';
     html += '<span class="bulk-count">' + selCount + ' selected</span>';
-    html += '<select onchange="IB.bulkChangeStatus(this.value);this.selectedIndex=0"><option value="">Change Status...</option>';
+    html += '<select aria-label="Bulk change status" onchange="IB.bulkChangeStatus(this.value);this.selectedIndex=0"><option value="">Change Status...</option>';
     STATUSES.forEach(function(s) { html += '<option value="' + s + '">' + s + '</option>'; });
     html += '</select>';
-    html += '<select onchange="IB.bulkChangePriority(this.value);this.selectedIndex=0"><option value="">Change Priority...</option>';
+    html += '<select aria-label="Bulk change priority" onchange="IB.bulkChangePriority(this.value);this.selectedIndex=0"><option value="">Change Priority...</option>';
     PRIORITIES.forEach(function(p) { html += '<option value="' + p + '">' + p + '</option>'; });
     html += '</select>';
-    html += '<select onchange="IB.bulkChangeCategory(this.value);this.selectedIndex=0"><option value="">Change Category...</option>';
+    html += '<select aria-label="Bulk change category" onchange="IB.bulkChangeCategory(this.value);this.selectedIndex=0"><option value="">Change Category...</option>';
     state.categories.forEach(function(c) { html += '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>'; });
     html += '</select>';
     if (canDeleteCount > 0) {
@@ -793,15 +860,15 @@ function renderListHtml() {
   var allSelected = allVisibleIds.length > 0 && allVisibleIds.every(function(id) { return state.selectedIds.indexOf(id) !== -1; });
 
   html += '<div class="list-view"><table class="list-table"><thead><tr>' +
-    '<th class="checkbox-col" onclick="IB.bulkToggleAll(event)"><input type="checkbox" ' + (allSelected ? 'checked' : '') + ' onclick="IB.bulkToggleAll(event)"></th>' +
-    '<th onclick="IB.sortBy(\'title\')">Title'+si('title')+'</th>' +
-    '<th onclick="IB.sortBy(\'category\')">Category'+si('category')+'</th>' +
-    '<th onclick="IB.sortBy(\'status\')">Status'+si('status')+'</th>' +
-    '<th onclick="IB.sortBy(\'priority\')">Priority'+si('priority')+'</th>' +
-    '<th onclick="IB.sortBy(\'votes\')">Votes'+si('votes')+'</th>' +
-    '<th onclick="IB.sortBy(\'submittedBy\')">Submitted By'+si('submittedBy')+'</th>' +
-    '<th onclick="IB.sortBy(\'createdAt\')">Date'+si('createdAt')+'</th>' +
-    '<th>Last Change</th>' +
+    '<th class="checkbox-col" scope="col" onclick="IB.bulkToggleAll(event)"><input type="checkbox" aria-label="Select all ideas" ' + (allSelected ? 'checked' : '') + ' onclick="IB.bulkToggleAll(event)"></th>' +
+    '<th'+sortAttrs('title','title')+' onclick="IB.sortBy(\'title\')">Title'+si('title')+'</th>' +
+    '<th'+sortAttrs('category','category')+' onclick="IB.sortBy(\'category\')">Category'+si('category')+'</th>' +
+    '<th'+sortAttrs('status','status')+' onclick="IB.sortBy(\'status\')">Status'+si('status')+'</th>' +
+    '<th'+sortAttrs('priority','priority')+' onclick="IB.sortBy(\'priority\')">Priority'+si('priority')+'</th>' +
+    '<th'+sortAttrs('votes','votes')+' onclick="IB.sortBy(\'votes\')">Votes'+si('votes')+'</th>' +
+    '<th'+sortAttrs('submittedBy','submitted by')+' onclick="IB.sortBy(\'submittedBy\')">Submitted By'+si('submittedBy')+'</th>' +
+    '<th'+sortAttrs('createdAt','date')+' onclick="IB.sortBy(\'createdAt\')">Date'+si('createdAt')+'</th>' +
+    '<th scope="col">Last Change</th>' +
     '</tr></thead><tbody>';
 
   if (!ideas.length) { html += '<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--text-light)">No ideas yet.</td></tr>'; }
@@ -819,7 +886,7 @@ function renderListHtml() {
       lastChange += '<span class="history-cell-meta">'+escapeHtml(last.user)+' &middot; '+formatDate(last.timestamp)+'</span>';
     }
     html += '<tr class="' + (isSelected ? 'row-selected' : '') + '" onclick="IB.showDetail(\''+idea.id+'\')">' +
-      '<td class="checkbox-col" onclick="event.stopPropagation()"><input type="checkbox" ' + (isSelected ? 'checked' : '') + ' onchange="IB.bulkToggle(\''+idea.id+'\',event)"></td>' +
+      '<td class="checkbox-col" onclick="event.stopPropagation()"><input type="checkbox" aria-label="Select this idea" ' + (isSelected ? 'checked' : '') + ' onchange="IB.bulkToggle(\''+idea.id+'\',event)"></td>' +
       '<td style="font-weight:600">'+escapeHtml(idea.title)+'</td>' +
       '<td>'+escapeHtml(idea.category)+'</td>' +
       '<td><span class="status-badge '+sc+'">'+idea.status+'</span></td>' +
@@ -845,8 +912,12 @@ function renderCategoryFilter() {
 // ============================================================
 function setView(view) {
   state.currentView = view;
-  document.getElementById('view-kanban').classList.toggle('active', view==='kanban');
-  document.getElementById('view-list').classList.toggle('active', view==='list');
+  var kanbanBtn = document.getElementById('view-kanban');
+  var listBtn = document.getElementById('view-list');
+  kanbanBtn.classList.toggle('active', view==='kanban');
+  listBtn.classList.toggle('active', view==='list');
+  kanbanBtn.setAttribute('aria-pressed', view==='kanban' ? 'true' : 'false');
+  listBtn.setAttribute('aria-pressed', view==='list' ? 'true' : 'false');
   render();
 }
 
@@ -931,13 +1002,13 @@ function showIdeaForm(idea) {
   var catOpts=state.categories.map(function(c){return '<option value="'+escapeHtml(c)+'"'+(idea&&idea.category===c?' selected':'')+'>'+escapeHtml(c)+'</option>';}).join('');
   var statOpts=STATUSES.map(function(s){return '<option value="'+s+'"'+(idea&&idea.status===s?' selected':'')+'>'+s+'</option>';}).join('');
   var prioOpts=PRIORITIES.map(function(p){return '<option value="'+p+'"'+(idea&&idea.priority===p?' selected':'')+'>'+p+'</option>';}).join('');
-  var html='<div class="modal-header"><h2>'+title+'</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  var html='<div class="modal-header"><h2>'+title+'</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html+='<div class="modal-body">';
-  html+='<div class="form-group"><label>Title *</label><input type="text" id="f-title" value="'+(idea?escapeAttr(idea.title):'')+'" placeholder="What\'s the idea?"></div>';
-  html+='<div class="form-group"><label>Description</label><textarea id="f-desc" placeholder="Describe the idea in detail...">'+(idea?escapeHtml(idea.description):'')+'</textarea></div>';
-  html+='<div class="form-group"><label>Benefits</label><textarea id="f-benefits" placeholder="What benefits does this bring?">'+(idea?escapeHtml(idea.benefits):'')+'</textarea></div>';
-  html+='<div class="form-row"><div class="form-group"><label>Category</label><select id="f-category">'+catOpts+'</select></div><div class="form-group"><label>Priority</label><select id="f-priority">'+prioOpts+'</select></div></div>';
-  html+='<div class="form-row"><div class="form-group"><label>Status</label><select id="f-status">'+statOpts+'</select></div><div class="form-group"><label>Submitted By</label><input type="text" id="f-submitter" value="'+(idea?escapeAttr(idea.submittedBy):escapeAttr(state.currentUser.name))+'"></div></div>';
+  html+='<div class="form-group"><label for="f-title">Title *</label><input type="text" id="f-title" value="'+(idea?escapeAttr(idea.title):'')+'" placeholder="What\'s the idea?"></div>';
+  html+='<div class="form-group"><label for="f-desc">Description</label><textarea id="f-desc" placeholder="Describe the idea in detail...">'+(idea?escapeHtml(idea.description):'')+'</textarea></div>';
+  html+='<div class="form-group"><label for="f-benefits">Benefits</label><textarea id="f-benefits" placeholder="What benefits does this bring?">'+(idea?escapeHtml(idea.benefits):'')+'</textarea></div>';
+  html+='<div class="form-row"><div class="form-group"><label for="f-category">Category</label><select id="f-category">'+catOpts+'</select></div><div class="form-group"><label for="f-priority">Priority</label><select id="f-priority">'+prioOpts+'</select></div></div>';
+  html+='<div class="form-row"><div class="form-group"><label for="f-status">Status</label><select id="f-status">'+statOpts+'</select></div><div class="form-group"><label for="f-submitter">Submitted By</label><input type="text" id="f-submitter" value="'+(idea?escapeAttr(idea.submittedBy):escapeAttr(state.currentUser.name))+'"></div></div>';
   html+='</div><div class="modal-footer">';
   if(isEdit)html+='<button class="btn btn-danger" onclick="IB.confirmDelete(\''+idea.id+'\')">Delete</button>';
   html+='<button class="btn" onclick="IB.closeModal()">Cancel</button><button class="btn btn-primary" onclick="IB.submitIdea(\''+(idea?idea.id:'')+'\')">'+(isEdit?'Update':'Add Idea')+'</button></div>';
@@ -977,11 +1048,11 @@ function showDetail(id) {
   var pc='priority-'+idea.priority.toLowerCase();
   var score=getVoteScore(idea), uv=getUserVote(idea);
 
-  var html='<div class="modal-header"><h2>'+escapeHtml(idea.title)+'</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  var html='<div class="modal-header"><h2>'+escapeHtml(idea.title)+'</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html+='<div class="modal-body">';
   html+='<div class="detail-meta"><div class="detail-meta-item"><span class="status-badge '+sc+'">'+idea.status+'</span></div><div class="detail-meta-item"><span class="card-priority '+pc+'">'+idea.priority+'</span></div><div class="detail-meta-item"><span class="card-category">'+escapeHtml(idea.category)+'</span></div>';
   // Votes in detail
-  html+='<div class="detail-meta-item"><span class="detail-vote-widget"><button class="vote-btn up'+(uv===1?' active':'')+'" onclick="IB.upvote(\''+idea.id+'\');IB.showDetail(\''+idea.id+'\')">&#9650;</button><span class="vote-score'+(score>0?' positive':'')+(score<0?' negative':'')+'">'+score+'</span><button class="vote-btn down'+(uv===-1?' active':'')+'" onclick="IB.downvote(\''+idea.id+'\');IB.showDetail(\''+idea.id+'\')">&#9660;</button></span></div>';
+  html+='<div class="detail-meta-item"><span class="detail-vote-widget"><button class="vote-btn up'+(uv===1?' active':'')+'" title="Upvote" aria-label="Upvote" aria-pressed="'+(uv===1?'true':'false')+'" onclick="IB.upvote(\''+idea.id+'\');IB.showDetail(\''+idea.id+'\')">&#9650;</button><span class="vote-score'+(score>0?' positive':'')+(score<0?' negative':'')+'" title="Vote score">'+score+'</span><button class="vote-btn down'+(uv===-1?' active':'')+'" title="Downvote" aria-label="Downvote" aria-pressed="'+(uv===-1?'true':'false')+'" onclick="IB.downvote(\''+idea.id+'\');IB.showDetail(\''+idea.id+'\')">&#9660;</button></span></div>';
   html+='</div>';
 
   if(idea.description)html+='<div class="detail-section"><h4>Description</h4><p>'+escapeHtml(idea.description).replace(/\n/g,'<br>')+'</p></div>';
@@ -1018,7 +1089,7 @@ function showDetail(id) {
     });
     html+='</div>';
   }
-  html+='<div class="comment-form"><textarea id="comment-input" placeholder="Add a comment..." rows="2"></textarea><button class="btn btn-primary btn-sm" onclick="IB.addComment(\''+idea.id+'\')">Post</button></div>';
+  html+='<div class="comment-form"><textarea id="comment-input" placeholder="Add a comment..." rows="2" aria-label="Add a comment"></textarea><button class="btn btn-primary btn-sm" onclick="IB.addComment(\''+idea.id+'\')">Post</button></div>';
   html+='</div>';
 
   html+='</div><div class="modal-footer">';
@@ -1033,13 +1104,13 @@ function showDetail(id) {
 // DELETE / CATEGORIES / EXPORT / IMPORT
 // ============================================================
 function confirmDelete(id){var idea=state.ideas[id];if(!idea)return;if(!canDelete(idea)){showToast('You can only delete your own ideas');return;}if(confirm('Delete "'+idea.title+'"?')){deleteIdea(id);closeModal();showToast('Idea deleted');}}
-function showCategoryManager(){var html='<div class="modal-header"><h2>Manage Categories</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div><div class="modal-body"><div style="margin-bottom:1rem">';state.categories.forEach(function(cat,i){html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px"><span style="flex:1;font-size:.85rem">'+escapeHtml(cat)+'</span><button class="btn btn-sm btn-danger" onclick="IB.removeCategory('+i+')">Remove</button></div>';});html+='</div><div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div></div><div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';showModal(html);}
+function showCategoryManager(){var html='<div class="modal-header"><h2>Manage Categories</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div><div class="modal-body"><div style="margin-bottom:1rem">';state.categories.forEach(function(cat,i){html+='<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px"><span style="flex:1;font-size:.85rem">'+escapeHtml(cat)+'</span><button class="btn btn-sm btn-danger" onclick="IB.removeCategory('+i+')">Remove</button></div>';});html+='</div><div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.85rem"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div></div><div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';showModal(html);}
 function addCategory(){var inp=document.getElementById('new-category');var n=inp.value.trim();if(!n)return;if(state.categories.indexOf(n)!==-1){showToast('Already exists');return;}state.categories.push(n);saveCategories();showManageData();showToast('Category added');}
 function removeCategory(i){if(confirm('Remove "'+state.categories[i]+'"?')){state.categories.splice(i,1);saveCategories();showManageData();showToast('Removed');}}
 
 function showManageData() {
   if (!isAdmin()) { showToast('Admin access required'); return; }
-  var html = '<div class="modal-header"><h2>Manage Data</h2><button class="close-btn" onclick="IB.closeModal()">&times;</button></div>';
+  var html = '<div class="modal-header"><h2>Manage Data</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html += '<div class="modal-body">';
 
   // Export/Import section
@@ -1049,19 +1120,6 @@ function showManageData() {
   html += '<button class="btn btn-sm" onclick="IB.importData()">Import from JSON</button>';
   html += '</div>';
   html += '<p style="font-size:.72rem;color:var(--text-light)">Export downloads a JSON file and copies a text summary to clipboard. Import merges ideas from a JSON file.</p>';
-  html += '</div>';
-
-  // Categories section
-  html += '<div class="detail-section"><h4>Categories</h4>';
-  html += '<div style="margin-bottom:.6rem">';
-  state.categories.forEach(function(cat, i) {
-    html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;padding:.35rem .6rem;border:1px solid var(--border);border-radius:6px">';
-    html += '<span style="flex:1;font-size:.82rem">' + escapeHtml(cat) + '</span>';
-    html += '<button class="btn btn-sm btn-danger" onclick="IB.removeCategory(' + i + ')">x</button>';
-    html += '</div>';
-  });
-  html += '</div>';
-  html += '<div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface);color:var(--text)"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div>';
   html += '</div>';
 
   // Data stats
@@ -1076,6 +1134,19 @@ function showManageData() {
     html += '<button class="btn btn-sm" onclick="IB.showManageUsers()">Manage Users &amp; Roles</button>';
     html += '</div>';
   }
+
+  // Categories section (moved to the bottom; chips wrap horizontally)
+  html += '<div class="detail-section"><h4>Categories</h4>';
+  html += '<div class="category-chips" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.7rem">';
+  state.categories.forEach(function(cat, i) {
+    html += '<span class="category-chip" style="display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .55rem;border:1px solid var(--border);border-radius:16px;background:var(--surface-alt);font-size:.78rem">';
+    html += escapeHtml(cat);
+    html += '<button class="btn btn-sm btn-danger" style="padding:0 .35rem;line-height:1.4;border-radius:10px" onclick="IB.removeCategory(' + i + ')" aria-label="Remove category ' + escapeAttr(cat) + '" title="Remove category">&times;</button>';
+    html += '</span>';
+  });
+  html += '</div>';
+  html += '<div style="display:flex;gap:.4rem"><input type="text" id="new-category" placeholder="New category name" aria-label="New category name" style="flex:1;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface);color:var(--text)"><button class="btn btn-primary btn-sm" onclick="IB.addCategory()">Add</button></div>';
+  html += '</div>';
 
   html += '</div>';
   html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';

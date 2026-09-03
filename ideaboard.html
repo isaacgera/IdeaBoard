@@ -4,11 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Idea Board</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6366f1">
+<meta name="description" content="Team innovation tracker — capture, discuss, vote on and prioritise ideas.">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Idea Board">
 <style>
 :root, [data-theme="light"] {
-  --primary: #6366f1; --primary-light: #818cf8; --accent: #f59e0b;
+  --primary: #4f46e5; --primary-light: #818cf8; --accent: #f59e0b;
   --bg: #f8fafc; --surface: #fff; --surface-alt: #f1f5f9;
-  --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+  --text: #1e293b; --text-light: #475569; --border: #e2e8f0;
   --radius: 10px; --shadow: 0 2px 8px rgba(0,0,0,.06);
   --status-new: #3b82f6; --status-progress: #f59e0b; --status-review: #8b5cf6; --status-done: #10b981;
   --priority-high: #ef4444; --priority-medium: #f59e0b; --priority-low: #6b7280;
@@ -31,8 +41,8 @@ header { display: flex; align-items: center; justify-content: space-between; fle
 header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--accent), var(--status-done)); }
 .header-left { display: flex; align-items: center; }
 .header-brand { display: flex; align-items: center; gap: .7rem; }
-.brand-icon { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 3px 10px rgba(99,102,241,.25); }
-.brand-icon svg { stroke: #fff; }
+.brand-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(99,102,241,.25); overflow: hidden; }
+.brand-icon img { width: 100%; height: 100%; display: block; }
 header h1 { font-size: 1.3rem; color: var(--primary); line-height: 1.2; margin: 0; }
 header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400; display: block; letter-spacing: .3px; }
 .team-name { font-size: .78rem; font-weight: 400; color: var(--text-light); margin-left: .3rem; }
@@ -61,6 +71,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .dashboard { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .stat-card { flex: 1; min-width: 100px; padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); transition: all .3s cubic-bezier(.4,0,.2,1); }
 .stat-card.clickable { cursor: pointer; }
+.stat-card.clickable:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .stat-card .stat-number { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text); }
 .stat-card .stat-label { display: block; font-size: .65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .3px; }
 .stat-card.stat-new .stat-number { color: var(--status-new); }
@@ -98,9 +109,12 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .idea-card .card-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .68rem; color: var(--text-light); }
 .idea-card .card-category { background: var(--surface-alt); padding: .1rem .4rem; border-radius: 4px; font-weight: 500; }
 .idea-card .card-priority { padding: .1rem .4rem; border-radius: 4px; font-weight: 600; color: #fff; font-size: .65rem; }
-.priority-high { background: var(--priority-high); }
-.priority-medium { background: var(--priority-medium); }
-.priority-low { background: var(--priority-low); }
+/* Badge backgrounds darkened to the 600/700 shades so white text meets WCAG AA
+   (>=4.5:1) at this small font size. The --priority-* tokens are unchanged for
+   use elsewhere (borders/indicators). */
+.priority-high { background: #dc2626; }
+.priority-medium { background: #92400e; }
+.priority-low { background: #4b5563; }
 .idea-card .card-benefits { font-size: .72rem; color: var(--text-light); margin-top: .3rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .idea-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: .4rem; font-size: .68rem; color: var(--text-light); }
 .card-actions { display: flex; align-items: center; gap: .4rem; }
@@ -126,10 +140,11 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .list-table tr:hover { background: var(--surface-alt); }
 .list-table tr { cursor: pointer; transition: background .15s; }
 .status-badge { padding: .15rem .5rem; border-radius: 10px; font-size: .7rem; font-weight: 600; color: #fff; white-space: nowrap; }
-.status-new { background: var(--status-new); }
-.status-in-progress { background: var(--status-progress); }
-.status-review { background: var(--status-review); }
-.status-done { background: var(--status-done); }
+/* Darkened to 600/700 shades so white badge text meets WCAG AA (>=4.5:1). */
+.status-new { background: #2563eb; }
+.status-in-progress { background: #92400e; }
+.status-review { background: #7c3aed; }
+.status-done { background: #047857; }
 
 /* Modal */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
@@ -171,7 +186,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .user-bar { display: flex; align-items: center; gap: .5rem; }
 .user-bar .user-name { font-size: .78rem; font-weight: 500; color: var(--text-light); }
 .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
-.online-count { font-size: .7rem; color: var(--text-light); background: #dcfce7; padding: .15rem .4rem; border-radius: 10px; cursor: pointer; transition: all .2s; }
+.online-count { font-family: inherit; border: none; font-size: .7rem; color: var(--text-light); background: #dcfce7; padding: .15rem .4rem; border-radius: 10px; cursor: pointer; transition: all .2s; }
 .online-count:hover { background: #bbf7d0; box-shadow: 0 2px 6px rgba(16,185,129,.2); }
 .theme-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: .3rem .5rem; font-size: 1rem; line-height: 1; }
 
@@ -261,7 +276,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
     <div class="header-left">
       <div class="header-brand">
         <div class="brand-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
+          <img src="icon-192.png" alt="Idea Board logo" width="40" height="40">
         </div>
         <div>
           <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span></h1>
@@ -272,35 +287,37 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
     <div class="user-bar">
       <button class="btn btn-sm" onclick="IB.startTour()" title="Take a guided tour">Tour</button>
       <a class="btn btn-sm" href="userguide.html" target="_blank" title="User Guide">Guide</a>
-      <button class="theme-btn" id="theme-toggle" onclick="IB.toggleTheme()" title="Toggle dark/light mode"></button>
-      <span class="online-count" id="online-count" onclick="IB.showOnlineUsers()" style="display:none">1 online</span>
+      <button class="theme-btn" id="theme-toggle" onclick="IB.toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle dark and light mode"></button>
+      <button class="online-count" id="online-count" onclick="IB.showOnlineUsers()" style="display:none" aria-label="Show online users" title="Show online users">1 online</button>
       <span class="user-name" id="user-display"></span>
-      <div class="user-avatar" id="user-avatar"></div>
-      <button class="btn btn-sm" id="btn-switch-user" onclick="IB.changeUser()">Switch</button>
+      <div class="user-avatar" id="user-avatar" aria-hidden="true"></div>
+      <button class="btn btn-sm" id="btn-switch-user" onclick="IB.changeUser()" title="Switch to a different user">Switch</button>
     </div>
   </header>
 
+  <main id="main-content">
   <div id="dashboard-container"></div>
 
   <div class="toolbar">
-    <button class="btn btn-primary" onclick="IB.showAddIdea()">+ New Idea</button>
-    <input type="text" class="search-box" id="search-input" placeholder="Search ideas..." oninput="IB.filterIdeas()">
-    <select id="filter-category" onchange="IB.filterIdeas()"><option value="">All Categories</option></select>
-    <select id="filter-priority" onchange="IB.filterIdeas()">
+    <button class="btn btn-primary" onclick="IB.showAddIdea()" title="Add a new idea">+ New Idea</button>
+    <input type="text" class="search-box" id="search-input" placeholder="Search ideas..." oninput="IB.filterIdeas()" aria-label="Search ideas" title="Search ideas by title, description or benefits">
+    <select id="filter-category" onchange="IB.filterIdeas()" aria-label="Filter by category" title="Filter by category"><option value="">All Categories</option></select>
+    <select id="filter-priority" onchange="IB.filterIdeas()" aria-label="Filter by priority" title="Filter by priority">
       <option value="">All Priorities</option>
       <option value="High">High</option>
       <option value="Medium">Medium</option>
       <option value="Low">Low</option>
     </select>
-    <div class="view-toggle">
-      <button id="view-kanban" class="active" onclick="IB.setView('kanban')">Board</button>
-      <button id="view-list" onclick="IB.setView('list')">List</button>
+    <div class="view-toggle" role="group" aria-label="View mode">
+      <button id="view-kanban" class="active" onclick="IB.setView('kanban')" aria-pressed="true" title="Kanban board view">Board</button>
+      <button id="view-list" onclick="IB.setView('list')" aria-pressed="false" title="List / table view">List</button>
     </div>
-    <button class="btn btn-sm" id="btn-manage-data" onclick="IB.showManageData()" style="display:none">Manage Data</button>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="IB.handleImport(this)">
+    <button class="btn btn-sm" id="btn-manage-data" onclick="IB.showManageData()" style="display:none" title="Export, import, manage categories and users">Manage Data</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="IB.handleImport(this)" aria-label="Import ideas from JSON file">
   </div>
 
   <div id="board-content"></div>
+  </main>
 </div>
 
 <div class="modal-overlay" id="modal-overlay">
@@ -326,6 +343,17 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="app.js?v=2.3"></script>
+<script src="app.js?v=2.4.6"></script>
+<script>
+  // Register the service worker for offline app-shell support.
+  // Only registers over http(s) — skips file:// where SWs are unsupported.
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch((err) => {
+        console.warn('Service worker registration failed:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>

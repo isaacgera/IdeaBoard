@@ -108,6 +108,20 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 - Covers all features with table of contents
 - Accessible via "Guide" button in header
 
+### FR-18: Progressive Web App (PWA) — added v2.4.x
+- Installable on desktop and mobile via web app manifest (`manifest.json`)
+- `start_url: ./ideaboard.html`, `scope: ./`, `display: standalone`
+- App icons: 192, 512, and a maskable 512 (indigo tile + outline lightbulb);
+  header brand icon reuses `icon-192.png` so it always matches the tab/installed icon
+- Manifest screenshots (wide + narrow) for richer install UI
+- **Offline behaviour:** a service worker (`sw.js`) precaches the app shell
+  (HTML, JS, icons, manifest) so the app loads offline. Firebase (Realtime DB +
+  CDN SDK) is deliberately NOT cached — when offline/blocked it degrades gracefully
+  to the existing localStorage fallback. Live DB data is never cached.
+- Versioned cache name; old caches cleaned on activate; navigation fallback to the
+  cached shell
+- Service worker only registers over http(s); no-ops on `file://`
+
 ## Non-Functional Requirements
 
 ### NFR-01: No Build Tools
@@ -136,10 +150,20 @@ A multi-user team innovation tracker for capturing, discussing, prioritising, an
 - Static files only (no server-side processing)
 - Cache-busting via query string on script tags
 
-### NFR-05: Accessibility
-- Semantic HTML structure
-- Keyboard navigable modals (Escape to close)
-- Color contrast maintained in both themes
+### NFR-05: Accessibility (verified Lighthouse 100 at v2.4.6)
+- Semantic HTML structure incl. a `<main>` landmark
+- All interactive controls have accessible names (aria-label or associated <label>):
+  icon buttons, filter/bulk selects, search box, checkboxes, vote buttons, modal
+  close buttons
+- Clickable non-button elements are real buttons or have role="button" + keyboard
+  activation (Enter/Space) and visible focus outlines (e.g. dashboard stat cards)
+- Sortable table headers expose `scope="col"` and `aria-sort`
+- Tooltips (`title`) on icon-only / non-obvious controls; `aria-pressed` on toggles
+  and vote buttons
+- WCAG AA colour contrast (>=4.5:1) in both themes — badges and primary buttons use
+  600/700/800 shades where white text sits on colour
+- Full WCAG conformance still requires manual testing with assistive technologies;
+  Lighthouse covers only a subset
 
 ### NFR-06: Security
 - No anonymous access (forced name entry)
