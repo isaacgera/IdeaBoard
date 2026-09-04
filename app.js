@@ -61,6 +61,16 @@ function init() {
   render();
   setupDragListeners();
   setupKeyboardActivation();
+  showAppVersion();
+}
+
+// Surface the single-source-of-truth version constant in the header.
+function showAppVersion() {
+  var el = document.getElementById('app-version');
+  if (el) {
+    el.textContent = 'v' + APP_VERSION;
+    el.title = 'Idea Board v' + APP_VERSION;
+  }
 }
 
 // Let keyboard users activate role="button" elements (e.g. dashboard stat cards)

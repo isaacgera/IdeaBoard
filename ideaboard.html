@@ -49,6 +49,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .team-name::before { content: '\2014 '; }
 .last-updated { margin-left: .5rem; font-size: .65rem; color: var(--text-light); opacity: .8; }
 .last-updated::before { content: '\2022 '; }
+.version-badge { margin-left: .4rem; font-size: .6rem; font-weight: 600; color: var(--primary); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: .05rem .4rem; letter-spacing: .3px; vertical-align: middle; }
 
 .btn { padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: .8rem; font-weight: 500; transition: all .2s; display: inline-flex; align-items: center; gap: .3rem; }
 .btn:hover { border-color: var(--primary); color: var(--primary); }
@@ -279,7 +280,7 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
           <img src="icon-192.png" alt="Idea Board logo" width="40" height="40">
         </div>
         <div>
-          <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span></h1>
+          <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span> <span class="version-badge" id="app-version" title="App version"></span></h1>
           <span class="subtitle">Team Innovation Tracker <span class="last-updated" id="last-updated"></span></span>
         </div>
       </div>
