@@ -546,3 +546,38 @@ Two optional items from the audit; prepared, drop-in, low-risk (Default mode).
 ### Not done / notes
 - Neither edit applied this session (tools were read-only — no write access).
 - Ideas.md left unchanged (app already `Built`; this is display polish, not a status change).
+
+
+## Session 8 — Sep 4, 2026
+**Applied the version badge (Session 7 pending item 1) + deployed**
+
+### Goal
+Apply the first of the two Session 7 pending polish items — surface the `APP_VERSION`
+constant in the header — now that file-editing tools were available. Default mode,
+display-only, no version bump (stays v2.4.6).
+
+### What Was Done (3 drop-in edits, exactly as prepped in Session 7)
+- **`ideaboard.html`** — added the `.version-badge` CSS rule after `.last-updated::before`
+  (uses existing tokens: `--primary`, `--surface-alt`, `--border` — so it themes cleanly
+  in light + dark). Added `<span class="version-badge" id="app-version" title="App version">`
+  to the header `<h1>`, just after the `.team-name` span.
+- **`app.js`** — added `showAppVersion();` as the last line of `init()`, plus the helper
+  that writes `'v' + APP_VERSION` into `#app-version` (and its title). Reads from the
+  single-source-of-truth constant so the badge can't drift from the real version on release.
+
+### Verification
+- Isaac confirmed and then committed + pushed (`git pushall` → origin, team, github),
+  redeploying all three Pages sites. Browser eyeball of the badge was done on Isaac's side
+  (Live Server) — Kiro can't run a browser here (known Windows shell quirk).
+
+### Version
+- Unchanged: **v2.4.6** (display-only change).
+
+### Still pending (carried forward)
+- **Session 7 item 2:** replace placeholder manifest screenshots with real grabs
+  (`screenshot-wide.png` 1280×720, `screenshot-narrow.png` 720×1280) — manual, no code.
+- **Option A:** proper name-keyed user identity + Firebase data migration (own Quick Spec,
+  needs a data backup first).
+- **TASK-02:** port ALL Session 6 + this badge change into v3-modular before it could ship,
+  then re-verify (Lighthouse 100 + offline).
+- Ideas.md unchanged (app already `Built`; this was display polish, not a status change).
