@@ -497,3 +497,52 @@ a few extra KB. Clean it up in a future tidy pass if desired.
 **Gotcha to remember:** whenever a new static asset type is added (e.g. `.svg`, `.webp`),
 the CI copy glob must be extended, otherwise it deploys on GitHub but silently 404s on
 GitLab Pages.
+## Session 7 — PWA readiness audit + pending polish edits
+
+### PWA Readiness audit (root monolith, v2.4.6) — PASSED
+- Audited the live entry point `ideaboard.html` (confirmed as the deployed file via
+  `.gitlab-ci.yml` + Session 6). Verdict: **PWA-ready**, no blockers, no should-fix gaps.
+- Confirmed by direct file reads (not just grep): manifest linked in `<head>`, theme-color
+  + icons + apple-touch-icon metas present; `sw.js` exists AND is registered
+  (`ideaboard.html` ~line 352), feature-guarded and http-only; versioned cache
+  (`ideaboard-shell-v2.4.6`) with activate-cleanup; shell precache + stale-while-revalidate;
+  Firebase deliberately bypassed. Icons 192/512/512-maskable present on disk.
+- Note: v3-modular still has NO PWA layer — must be ported before it could ship (SPEC-tasks TASK-02).
+
+### Pending polish edits (NOT yet applied — do in a session with file-editing enabled)
+Two optional items from the audit; prepared, drop-in, low-risk (Default mode).
+
+1. **Surface APP_VERSION in the header** (code):
+   - `ideaboard.html` — add after the `.last-updated::before` CSS rule (~line 50):
+     ```css
+     .version-badge { margin-left: .4rem; font-size: .6rem; font-weight: 600; color: var(--primary); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: .05rem .4rem; letter-spacing: .3px; vertical-align: middle; }
+     ```
+   - `ideaboard.html` — replace the header `<h1>` line with:
+     ```html
+     <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span> <span class="version-badge" id="app-version" title="App version"></span></h1>
+     ```
+   - `app.js` — add `showAppVersion();` as the last line of `init()`, then add the helper:
+     ```javascript
+     // Surface the single-source-of-truth version constant in the header.
+     function showAppVersion() {
+       var el = document.getElementById('app-version');
+       if (el) {
+         el.textContent = 'v' + APP_VERSION;
+         el.title = 'Idea Board v' + APP_VERSION;
+       }
+     }
+     ```
+   - Reads from the `APP_VERSION` constant so the badge can't drift on release. Uses existing
+     tokens — works in light + dark. No version bump needed (display-only, still v2.4.6).
+
+2. **Replace placeholder manifest screenshots** (manual, no code):
+   - Capture real grabs and save over `screenshot-wide.png` (1280×720) and
+     `screenshot-narrow.png` (720×1280) — manifest already points at those filenames.
+
+### Verify (next session, after applying)
+- Serve via Live Server (NOT `file://`). Confirm `v2.4.6` badge renders in the header in both
+  light and dark themes; console clean. Optional: re-run Lighthouse PWA check.
+
+### Not done / notes
+- Neither edit applied this session (tools were read-only — no write access).
+- Ideas.md left unchanged (app already `Built`; this is display polish, not a status change).
