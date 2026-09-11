@@ -21,6 +21,7 @@ const SHELL_ASSETS = [
   './app-proto.js',
   './auth-config.js',
   './auth.js',
+  './msal-browser.min.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',

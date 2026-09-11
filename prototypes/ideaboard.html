@@ -370,8 +370,11 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- MSAL.js browser library (Entra ID sign-in). Loaded from Microsoft CDN. -->
-<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<!-- MSAL.js browser library (Entra ID sign-in).
+     Loaded LOCALLY (not from CDN) because the corporate proxy/SSL interception
+     blocks alcdn.msauth.net. Download msal-browser.min.js into this folder —
+     see SWAP-INSTRUCTIONS.md. -->
+<script src="msal-browser.min.js"></script>
 
 <!-- Auth config (Client ID / Tenant ID / redirect URI / allow-lists) then the gate -->
 <script src="auth-config.js"></script>
