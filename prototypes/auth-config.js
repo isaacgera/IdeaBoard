@@ -52,7 +52,8 @@ window.IB_AUTH_CONFIG = {
   ],
 
   allowedUsers: [
-    'isaac.2.gera@bt.com',   // prototype verification — single authorized user
+    'isaac.2.gera@bt.com',      // prototype verification
+    'srinivas.ballem@bt.com',   // prototype verification — colleague
   ],
 
   // ----------------------------------------------------------
