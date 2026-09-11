@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Idea Board - User Guide</title>
+<style>
+:root { --primary: #6366f1; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --surface: #fff; --border: #e2e8f0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+.guide { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+h1 { font-size: 2rem; color: var(--primary); margin-bottom: .5rem; display: flex; align-items: center; gap: .5rem; }
+h1 svg { stroke: var(--primary); }
+.subtitle { color: var(--text-light); font-size: .9rem; margin-bottom: 2rem; }
+h2 { font-size: 1.3rem; color: var(--primary); margin-top: 2.5rem; margin-bottom: .8rem; padding-bottom: .4rem; border-bottom: 2px solid var(--border); }
+h3 { font-size: 1rem; color: var(--text); margin-top: 1.5rem; margin-bottom: .5rem; }
+p { margin-bottom: .8rem; font-size: .92rem; }
+ul, ol { margin: .5rem 0 1rem 1.5rem; font-size: .9rem; }
+li { margin-bottom: .4rem; }
+code { background: #f1f5f9; padding: .15rem .4rem; border-radius: 4px; font-size: .82rem; color: #7c3aed; }
+.tip { background: #eef2ff; border-left: 4px solid var(--primary); padding: .8rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: .85rem; }
+.tip strong { color: var(--primary); }
+.warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: .8rem 1rem; border-radius: 0 8px 8px 0; margin: 1rem 0; font-size: .85rem; }
+.warning strong { color: #92400e; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .85rem; }
+th, td { border: 1px solid var(--border); padding: .5rem .7rem; text-align: left; }
+th { background: #f8fafc; font-weight: 600; }
+.back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--primary); text-decoration: none; font-size: .85rem; }
+.back-link:hover { text-decoration: underline; }
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+.toc h3 { margin-top: 0; color: var(--text-light); font-size: .85rem; text-transform: uppercase; letter-spacing: .5px; }
+.toc ul { list-style: none; margin: .5rem 0 0 0; }
+.toc li { margin-bottom: .3rem; }
+.toc a { color: var(--primary); text-decoration: none; font-size: .88rem; }
+.toc a:hover { text-decoration: underline; }
+.version-badge { display: inline-block; background: var(--primary); color: #fff; padding: .2rem .6rem; border-radius: 10px; font-size: .7rem; font-weight: 600; margin-left: .5rem; }
+@media (max-width: 640px) { .guide { padding: 1rem; } h1 { font-size: 1.5rem; } }
+@media print { .back-link { display: none; } body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="guide">
+  <a class="back-link" href="ideaboard.html">&larr; Back to Idea Board</a>
+
+  <h1>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
+    Idea Board User Guide
+    <span class="version-badge">v2.4.6</span>
+  </h1>
+  <p class="subtitle">Architecture Middleware Integration Team — Team Innovation Tracker</p>
+
+  <div class="toc">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#getting-started">Getting Started</a></li>
+      <li><a href="#install">Install This App (PWA)</a></li>
+      <li><a href="#adding-ideas">Adding Ideas</a></li>
+      <li><a href="#views">Board View & List View</a></li>
+      <li><a href="#drag-drop">Drag and Drop</a></li>
+      <li><a href="#voting">Voting</a></li>
+      <li><a href="#comments">Comments</a></li>
+      <li><a href="#dashboard">Dashboard Stats</a></li>
+      <li><a href="#filtering">Search & Filtering</a></li>
+      <li><a href="#bulk-actions">Bulk Actions</a></li>
+      <li><a href="#dark-mode">Dark Mode</a></li>
+      <li><a href="#roles">Roles & Permissions</a></li>
+      <li><a href="#admin">Admin Features</a></li>
+      <li><a href="#export-import">Export & Import</a></li>
+      <li><a href="#audit">Audit Log & Timeline</a></li>
+      <li><a href="#tips">Tips & Best Practices</a></li>
+      <li><a href="#modular">v3 Modular Version (Developer Info)</a></li>
+      <li><a href="#deployment">Deployment & Hosting (Developer Info)</a></li>
+    </ul>
+  </div>
+
+  <h2 id="getting-started">Getting Started</h2>
+  <p>The Idea Board is hosted on the team's internal GitLab Pages. Open the team Pages URL in your browser — no installation needed. It works on desktop, tablet, and mobile.</p>
+  <p>When you first open the Idea Board, you'll be asked to enter your full name. This is mandatory — the app will not proceed until a valid name is entered. Your name identifies you across the team for ideas, comments, and votes.</p>
+  <p>A guided tour will automatically walk you through the main features on your first visit. You can replay it anytime by clicking the <strong>Tour</strong> button in the top-right corner.</p>
+  <div class="tip"><strong>Tip:</strong> Use your full name so team members know who submitted each idea. Your name cannot be changed later (only admin can rename users).</div>
+
+  <h2 id="install">Install This App (PWA)</h2>
+  <p>Idea Board is a <strong>Progressive Web App</strong>, so you can install it and launch it like a normal desktop or phone app — in its own window, with its own icon, no browser address bar. It also keeps working when you briefly lose connection.</p>
+
+  <h3>Desktop (Chrome / Edge)</h3>
+  <ul>
+    <li>Open the app, then look for the <strong>install icon</strong> (a small screen with a down-arrow) at the right-hand end of the address bar.</li>
+    <li>Click it and choose <strong>Install</strong>. The app opens in its own window and adds an icon to your Start menu / taskbar.</li>
+    <li>Alternatively use the browser menu (&#8942;) &rarr; <strong>Apps</strong> / <strong>Install Idea Board</strong>.</li>
+  </ul>
+
+  <h3>Android (Chrome)</h3>
+  <ul>
+    <li>Open the app, tap the browser menu (&#8942;), then <strong>Add to Home screen</strong> / <strong>Install app</strong>.</li>
+    <li>Confirm, and the Idea Board icon appears on your home screen.</li>
+  </ul>
+
+  <h3>iPhone / iPad (Safari)</h3>
+  <ul>
+    <li>Open the app in Safari, tap the <strong>Share</strong> button, then <strong>Add to Home Screen</strong>.</li>
+    <li>Tap <strong>Add</strong>. The app launches full-screen from your home screen.</li>
+  </ul>
+
+  <h3>Working Offline</h3>
+  <p>Once you've opened the app at least once, the interface will still load if you go offline. However, Idea Board syncs ideas in real time through a cloud database, so:</p>
+  <ul>
+    <li><strong>Offline:</strong> the app shell loads, but you won't see live updates or be able to sync new changes to the team.</li>
+    <li><strong>Back online:</strong> real-time sync resumes automatically.</li>
+  </ul>
+  <div class="tip"><strong>Tip:</strong> Installing is optional — the app works exactly the same in a normal browser tab. Installing just makes it quicker to open and gives it a dedicated window.</div>
+
+  <h2 id="adding-ideas">Adding Ideas</h2>
+  <p>Click the <strong>+ New Idea</strong> button in the toolbar to submit a new idea.</p>
+  <h3>Fields:</h3>
+  <table>
+    <tr><th>Field</th><th>Required</th><th>Description</th></tr>
+    <tr><td>Title</td><td>Yes</td><td>A short, clear name for your idea</td></tr>
+    <tr><td>Description</td><td>No</td><td>Detailed explanation of what the idea involves</td></tr>
+    <tr><td>Benefits</td><td>No</td><td>What value does this bring? Time saved, cost reduced, quality improved?</td></tr>
+    <tr><td>Category</td><td>Yes</td><td>Process Improvement, Technology, Customer Experience, Cost Saving, Team Culture, or Other</td></tr>
+    <tr><td>Priority</td><td>Yes</td><td>High, Medium, or Low</td></tr>
+    <tr><td>Status</td><td>Yes</td><td>New, In Progress, Review, or Done (defaults to New)</td></tr>
+    <tr><td>Submitted By</td><td>Auto</td><td>Auto-fills with your name</td></tr>
+  </table>
+  <div class="tip"><strong>Tip:</strong> Always fill in the Benefits field — it helps the team understand the value and prioritise effectively.</div>
+
+  <h2 id="views">Board View & List View</h2>
+  <h3>Board View (Kanban)</h3>
+  <p>Ideas are displayed as cards in four columns: <strong>New → In Progress → Review → Done</strong>. Each card shows the title, category, priority badge, benefits preview, submitter, comment count, and vote score.</p>
+
+  <h3>List View (Table)</h3>
+  <p>Ideas displayed in a sortable table with columns: checkbox, Title, Category, Status, Priority, Votes, Submitted By, Date, and Last Change.</p>
+  <ul>
+    <li>Click any column header to sort ascending/descending</li>
+    <li>Arrow indicators show current sort direction</li>
+    <li>Priority sorts by weight (High → Medium → Low)</li>
+    <li>Status sorts by workflow order (New → In Progress → Review → Done)</li>
+  </ul>
+
+  <h2 id="drag-drop">Drag and Drop</h2>
+  <p>In Board view, grab any card and drag it:</p>
+  <ul>
+    <li><strong>Between columns</strong> — changes the idea's status (e.g., drag from New to In Progress)</li>
+    <li><strong>Within a column</strong> — reorders cards by priority/importance</li>
+    <li>A blue indicator line shows exactly where the card will land</li>
+    <li>The target column highlights with a dashed border while hovering</li>
+  </ul>
+  <p>Status changes via drag are automatically recorded in the audit log with timestamp and your name.</p>
+  <div class="tip"><strong>Tip:</strong> Clicking a card opens its detail view. Dragging a card moves it. The app distinguishes between clicks and drags automatically.</div>
+
+  <h2 id="voting">Voting</h2>
+  <p>Each idea has upvote (&#9650;) and downvote (&#9660;) buttons visible on every card and in the detail view.</p>
+  <ul>
+    <li>Click &#9650; to upvote, click again to remove your vote</li>
+    <li>Click &#9660; to downvote, click again to remove</li>
+    <li>One vote per person per idea (you can't upvote AND downvote)</li>
+    <li>Green score = positive consensus, Red score = negative</li>
+    <li>In List view, sort by the "Votes" column to see most popular ideas</li>
+  </ul>
+
+  <h2 id="comments">Comments</h2>
+  <p>Click any idea card to open its detail view. At the bottom you'll find the comments thread.</p>
+  <ul>
+    <li>Type your comment in the text area and click <strong>Post</strong></li>
+    <li>Comments show your name, timestamp, and the text</li>
+    <li>You can delete your own comments (x button next to your comments)</li>
+    <li>Comment count appears on each card (&#128172; icon)</li>
+    <li>Adding/deleting comments is logged in the audit trail</li>
+  </ul>
+
+  <h2 id="dashboard">Dashboard Stats</h2>
+  <p>The stats bar above the toolbar shows at-a-glance metrics:</p>
+  <table>
+    <tr><th>Card</th><th>Shows</th></tr>
+    <tr><td>Total Ideas</td><td>Count of all ideas in the system</td></tr>
+    <tr><td>New</td><td>Ideas in "New" status</td></tr>
+    <tr><td>In Progress</td><td>Ideas currently being worked on</td></tr>
+    <tr><td>In Review</td><td>Ideas under review</td></tr>
+    <tr><td>Done</td><td>Completed ideas</td></tr>
+    <tr><td>This Month</td><td>Ideas created in the current calendar month</td></tr>
+    <tr><td>Top Contributor</td><td>Person who submitted the most ideas</td></tr>
+  </table>
+
+  <h3>Interactive Filtering:</h3>
+  <ul>
+    <li><strong>Hover</strong> over a stat card — non-matching items dim/hide instantly (preview)</li>
+    <li><strong>Click</strong> a stat card — locks the filter (stays active until you click elsewhere)</li>
+    <li><strong>Click outside</strong> the dashboard — clears the filter, shows all items</li>
+    <li><strong>Click "Total Ideas"</strong> — explicitly clears any active filter</li>
+  </ul>
+  <p>In Board view, non-matching cards fade to near-invisible. In List view, non-matching rows are completely hidden (true filter).</p>
+
+  <h2 id="filtering">Search & Filtering</h2>
+  <p>Use the toolbar controls to narrow down ideas:</p>
+  <ul>
+    <li><strong>Search box</strong> — live search across title, description, benefits, and submitter name</li>
+    <li><strong>Category dropdown</strong> — filter to a specific category</li>
+    <li><strong>Priority dropdown</strong> — filter by High, Medium, or Low</li>
+  </ul>
+  <p>All filters combine (e.g., search "automation" + category "Technology" + priority "High" shows only matching ideas). Clear all to see everything.</p>
+
+  <h2 id="bulk-actions">Bulk Actions</h2>
+  <p>In List view, each row has a checkbox on the left. Select one or more ideas to reveal the <strong>bulk action bar</strong> (purple bar above the table):</p>
+  <ul>
+    <li><strong>Select All</strong> — header checkbox selects all visible (filtered) rows</li>
+    <li><strong>Change Status</strong> — move all selected to New/In Progress/Review/Done</li>
+    <li><strong>Change Priority</strong> — set all selected to High/Medium/Low</li>
+    <li><strong>Change Category</strong> — reassign category for all selected</li>
+    <li><strong>Delete</strong> — removes ideas you have permission to delete</li>
+    <li><strong>Clear</strong> — deselects all items</li>
+  </ul>
+  <div class="warning"><strong>Permission note:</strong> Contributors can only bulk-delete their own ideas. If you select a mix of own + others' ideas, the delete button shows "Delete 2 of 5 (yours)" indicating only your ideas will be removed.</div>
+
+  <h2 id="dark-mode">Dark Mode</h2>
+  <p>Click the moon/sun icon (&#127769; / &#9728;&#65039;) in the top-right header area to toggle between light and dark themes.</p>
+  <ul>
+    <li>Your preference is saved and persists across browser sessions</li>
+    <li>All UI elements adapt including cards, modals, forms, and the dashboard</li>
+  </ul>
+
+  <h2 id="roles">Roles & Permissions</h2>
+  <table>
+    <tr><th>Action</th><th>Admin</th><th>Contributor</th></tr>
+    <tr><td>Add new ideas</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Edit own ideas</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Edit others' ideas</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Delete own ideas</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Delete others' ideas</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Comment on any idea</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Vote on any idea</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Drag cards (change status)</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Bulk actions on own ideas</td><td>Yes</td><td>Yes</td></tr>
+    <tr><td>Manage categories</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Import / Export data</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Manage users (promote/demote/rename/delete)</td><td>Yes</td><td>No</td></tr>
+    <tr><td>View online users</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Switch user identity</td><td>Yes</td><td>No</td></tr>
+  </table>
+  <p>You are a <strong>Contributor</strong> by default. The team admin (Isaac Gera) can promote you to Admin if needed.</p>
+
+  <h2 id="admin">Admin Features</h2>
+  <p>Admin-only features accessible via the <strong>Manage Data</strong> button in the toolbar:</p>
+
+  <h3>Export & Import</h3>
+  <ul>
+    <li><strong>Export as JSON</strong> — downloads all ideas as a JSON file + copies a readable text summary to your clipboard</li>
+    <li><strong>Import from JSON</strong> — merge ideas from a previously exported file</li>
+  </ul>
+
+  <h3>Category Management</h3>
+  <ul>
+    <li>View all categories with remove buttons</li>
+    <li>Add new categories via text input</li>
+    <li>Categories sync across all users in real-time</li>
+  </ul>
+
+  <h3>User Management (Manage Users & Roles)</h3>
+  <ul>
+    <li><strong>Promote</strong> — elevate a contributor to admin</li>
+    <li><strong>Demote</strong> — reduce an admin back to contributor</li>
+    <li><strong>Edit (Rename)</strong> — changes the user's name; all their ideas, comments, and history entries are remapped to the new name</li>
+    <li><strong>Delete</strong> — removes the user; all their ideas are reassigned to you (admin)</li>
+  </ul>
+  <div class="warning"><strong>Note:</strong> The hardcoded admin (Isaac Gera) cannot be demoted or deleted.</div>
+
+  <h3>Online Users</h3>
+  <p>The green badge in the header (e.g., "3 online") is visible to admin only. Click it to see a list of team members currently active on the board, with green status indicators.</p>
+
+  <h2 id="export-import">Export & Import</h2>
+  <p><strong>Export</strong> (admin only):</p>
+  <ul>
+    <li>Downloads a JSON file with all idea data (including votes, comments, history)</li>
+    <li>Simultaneously copies a human-readable text summary to your clipboard</li>
+    <li>Great for sharing via email, Teams, or as a backup</li>
+  </ul>
+  <p><strong>Import</strong> (admin only):</p>
+  <ul>
+    <li>Accepts JSON files in array format or object format</li>
+    <li>Merges with existing ideas (doesn't overwrite)</li>
+    <li>Also imports categories if present in the file</li>
+    <li>Infers milestone dates from status for ideas without date data</li>
+  </ul>
+
+  <h2 id="audit">Audit Log & Timeline</h2>
+  <p>Every idea has a complete audit trail visible in its detail view:</p>
+
+  <h3>Timeline</h3>
+  <p>A visual bar showing four milestones with dates:</p>
+  <ul>
+    <li><strong>Created</strong> — when the idea was first submitted</li>
+    <li><strong>Started</strong> — when status first changed to "In Progress"</li>
+    <li><strong>In Review</strong> — when status first changed to "Review"</li>
+    <li><strong>Completed</strong> — when status first changed to "Done"</li>
+  </ul>
+  <p>Active milestones are highlighted in purple with their timestamp.</p>
+
+  <h3>Version History</h3>
+  <p>A scrollable log showing every change to the idea:</p>
+  <ul>
+    <li>Creation events</li>
+    <li>Status changes (with from → to)</li>
+    <li>Field edits (title, description, benefits, category, priority)</li>
+    <li>Comments added</li>
+    <li>Bulk action changes (marked with "(bulk)")</li>
+    <li>User reassignments (when a user is renamed/deleted)</li>
+  </ul>
+  <p>In List view, the "Last Change" column shows the most recent audit entry for quick reference.</p>
+
+  <h2 id="tips">Tips & Best Practices</h2>
+  <ul>
+    <li>Write clear, actionable titles (e.g., "Automate weekly report generation" not "Reports")</li>
+    <li>Always fill in the Benefits field — it helps the team prioritise</li>
+    <li>Use voting to surface the ideas with the most team support</li>
+    <li>Move ideas through the workflow: New → In Progress → Review → Done</li>
+    <li>Comment on ideas to add context, ask questions, or show support</li>
+    <li>Use the dashboard stat cards in team meetings to focus discussion</li>
+    <li>Review "stale" ideas (stuck in New for weeks) regularly</li>
+    <li>Use bulk actions during review meetings to triage multiple ideas at once</li>
+    <li>Export periodically as a backup of your team's ideas</li>
+    <li>Try dark mode for comfortable evening/low-light usage</li>
+  </ul>
+
+  <h2 id="modular">v3 Modular Version (Developer Info)</h2>
+  <p>A restructured version of the app is available in the <code>v3-modular/</code> folder. It is functionally identical to the main app but uses a professional ES Modules architecture.</p>
+
+  <h3>What's Different?</h3>
+  <table>
+    <tr><th>Aspect</th><th>Original (v2.3)</th><th>v3-modular</th></tr>
+    <tr><td>JS structure</td><td>Single 680-line IIFE</td><td>12 modules (40-120 lines each)</td></tr>
+    <tr><td>CSS structure</td><td>Inline &lt;style&gt; block</td><td>8 separate .css files via &lt;link&gt;</td></tr>
+    <tr><td>Module system</td><td>None (IIFE closure)</td><td>Native ES Modules (import/export)</td></tr>
+    <tr><td>Build tools</td><td>None</td><td>None (still zero build)</td></tr>
+    <tr><td>Functionality</td><td>Full</td><td>Identical (same features, same Firebase)</td></tr>
+  </table>
+
+  <h3>Running the Modular Version Locally</h3>
+  <p>ES Modules require HTTP serving (not <code>file://</code> protocol). Use one of:</p>
+  <ul>
+    <li><code>npx serve v3-modular</code> (Node.js)</li>
+    <li><code>python -m http.server</code> from the <code>v3-modular</code> folder</li>
+    <li>Any local HTTP server (Live Server VS Code extension, etc.)</li>
+  </ul>
+  <p>On GitHub Pages or GitLab Pages, it works automatically since those serve over HTTPS.</p>
+
+  <h3>Module Map</h3>
+  <ul>
+    <li><code>src/app.js</code> — Entry point, wires everything together</li>
+    <li><code>src/modules/state.js</code> — Shared state and constants</li>
+    <li><code>src/modules/auth.js</code> — User identity, RBAC, user management</li>
+    <li><code>src/modules/firebase.js</code> — Firebase init, real-time sync</li>
+    <li><code>src/modules/ideas.js</code> — Create, update, delete ideas + audit log</li>
+    <li><code>src/modules/voting.js</code> — Upvote/downvote system</li>
+    <li><code>src/modules/comments.js</code> — Comment threads</li>
+    <li><code>src/modules/rendering.js</code> — All UI rendering (dashboard, board, list)</li>
+    <li><code>src/modules/dragdrop.js</code> — Drag and drop interaction</li>
+    <li><code>src/modules/bulk.js</code> — Bulk selection and actions</li>
+    <li><code>src/modules/modals.js</code> — Modal dialogs (forms, detail, manage)</li>
+    <li><code>src/modules/tour.js</code> — Guided intro tour</li>
+  </ul>
+  <div class="tip"><strong>For developers:</strong> To add a new feature, create a new module in <code>src/modules/</code>, import it in <code>app.js</code>, and expose any needed functions on <code>window.IB</code>. No other files need to change.</div>
+
+  <h2 id="deployment">Deployment & Hosting (Developer Info)</h2>
+  <p>The app is hosted on the team's internal GitLab Pages and redeploys automatically whenever changes are pushed to the team repository's default branch (<code>main</code>).</p>
+
+  <h3>Repositories</h3>
+  <table>
+    <tr><th>Remote</th><th>Path</th><th>Purpose</th></tr>
+    <tr><td><code>origin</code></td><td>615509493/IdeaBoard</td><td>Personal repository</td></tr>
+    <tr><td><code>team</code></td><td>robt/app02752/IdeaBoard</td><td>Team space (deploys GitLab Pages)</td></tr>
+  </table>
+  <p>The local working branch is <code>master</code>; the team project's default branch is <code>main</code>, so team pushes map <code>master:main</code>.</p>
+
+  <h3>Publishing Changes</h3>
+  <p>After committing, push to both repositories with a single alias:</p>
+  <ul>
+    <li><code>git pushall</code> — pushes to <code>origin</code> (master) then <code>team</code> (master:main)</li>
+  </ul>
+  <p>A push to the team space triggers the GitLab Pages pipeline, which republishes the site within a minute or two.</p>
+
+  <h3>Editing Directly on GitLab</h3>
+  <p>For quick fixes, files can be edited in the browser (<strong>Edit &rarr; Edit single file</strong>, or the <strong>Web IDE</strong> for multiple files). A commit to team <code>main</code> triggers a redeploy. Afterwards, re-sync your local and personal copies to avoid divergence:</p>
+  <ul>
+    <li><code>git pull team main</code></li>
+    <li><code>git push origin master</code></li>
+  </ul>
+
+  <div class="warning"><strong>Deployment gotcha:</strong> GitLab project imports do <em>not</em> carry over CI runner assignments. If the Pages pipeline stays stuck/pending after an import, assign a runner to the project under <strong>Settings &rarr; CI/CD &rarr; Runners</strong>. Also never embed access tokens in git remote URLs — let the OS credential manager hold them.</div>
+
+  <div class="tip"><strong>Need help?</strong> Click the <strong>Tour</strong> button in the app header for a guided walkthrough, or contact your admin (Isaac Gera).</div>
+
+  <hr style="margin:3rem 0 1rem;border:none;border-top:1px solid var(--border)">
+  <p style="color:var(--text-light);font-size:.75rem;text-align:center">
+    Idea Board v2.4.6 / v3.0-modular — Architecture Middleware Integration Team — Updated September 2026<br>
+    Built with Kiro AI IDE
+  </p>
+</div>
+</body>
+</html>
