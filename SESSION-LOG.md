@@ -581,3 +581,160 @@ display-only, no version bump (stays v2.4.6).
 - **TASK-02:** port ALL Session 6 + this badge change into v3-modular before it could ship,
   then re-verify (Lighthouse 100 + offline).
 - Ideas.md unchanged (app already `Built`; this was display polish, not a status change).
+
+
+## Session 9 — Sep 11, 2026
+**Entra ID (Azure AD) sign-in gate — PROTOTYPE build**
+
+### Goal
+Restrict access to the BT GitLab-hosted Idea Board so only verified + authorized BT
+users can open it, via Azure AD / Microsoft Entra ID. Built as a **prototype first**
+(per the prototype-first workflow) — nothing touched the live app. Quick Spec mode.
+
+### Decisions locked (agreed up front)
+1. **Authorized subset**, not just "any signed-in user". Real enforcement is intended
+   to be Entra-side ("Assignment required" + assigned users/groups); the app also has a
+   secondary app-side allow-list for a clean "Access denied" screen (UX gate, not a hard
+   boundary on its own).
+2. **Redirect URI:** `https://pages.gitlab.prod.ec.devops.nat.bt.com/ideaboard-c706fb/ideaboard.html`
+   — registered as **Single-page application** platform (confirmed by Isaac).
+3. **Firebase DB lockdown = out of scope for now.** This gate protects the APP (who can
+   open the page), NOT the raw Firebase Realtime DB (rules still open — someone hitting the
+   DB URL directly is unaffected). Noted as a future phase. Isaac confirmed data not
+   sensitive for now.
+4. **Prototype first**, then port to live once it proves out on the real BT URL.
+
+### Architecture / approach
+- **MSAL.js** (browser, `msal-browser 2.38.3` from Microsoft CDN), **public-client PKCE
+  flow** — no client secret anywhere (correct + required for a static SPA; keeps secrets
+  discipline). Client ID + Tenant ID are not secrets and live in the config file.
+- **Host-conditional gate:** auth engages ONLY on gated hosts (the BT GitLab origin).
+  On `file://`, `localhost`/Live Server, and the public GitHub copy the app stays open, so
+  the same codebase runs everywhere. localhost deliberately LEFT OUT of the gated list, so
+  local prototype testing stays friction-free (no login) — agreed with Isaac.
+- **Boot flow:** app no longer self-boots. `app-proto.js` exposes `window.IB_startApp()`;
+  the gate (`auth.js`) calls it only after a verified + authorized sign-in on gated hosts,
+  or immediately on ungated hosts. Fails **closed** if MSAL can't load or config is unset.
+- **Identity wiring:** on a gated host, `loadUser()` seeds the current user from the
+  verified token (name + UPN, stable id from `oid`/`sub`) instead of the name prompt.
+  Off-gate it keeps the original prompt so the sandbox still works offline.
+
+### Files created — all under `Productivity/Idea Board/prototypes/`
+- `ideaboard.html` — faithful copy of the live monolith + striped **PROTOTYPE** banner,
+  the sign-in gate overlay (`#auth-gate` + `.auth-*` styles), MSAL CDN script, a
+  host-conditional **Sign out** button, points at `app-proto.js`.
+- `app-proto.js` — copy of `app.js` (v2.4.6) with THREE changes: (1) localStorage keys
+  namespaced `ibproto_*` (isolated from live `ib_*` data); (2) gate-controlled boot via
+  `IB_startApp()` (guarded run-once); (3) token-seeded identity in `loadUser()`.
+  Version constant tagged **`2.5.0-proto`**.
+- `auth.js` — the MSAL gate: init → `handleRedirectPromise` → sign-in / authorize / boot,
+  with clean **Sign in**, **Access denied**, and **Sign-in problem** screens. Authorization
+  logic: empty lists = any tenant user; else match Entra group-id (`groups` claim) OR
+  user UPN/email (case-insensitive).
+- `auth-config.js` — the single edit point. Now populated:
+  - `clientId: 5dfd62e6-5070-401e-b91c-e433387c07ae`
+  - `tenantId: a7f35688-9c00-4d5e-ba41-29f146377ab0`
+  - `redirectUri` = the BT GitLab URL above
+  - `allowedUsers: ['isaac.2.gera@bt.com']` (prototype verification — single user)
+  - `gatedHosts: ['pages.gitlab.prod.ec.devops.nat.bt.com']` (localhost left out)
+- `manifest.json` — proto-named PWA manifest.
+- `sw.js` — proto SW; cache namespaced `ideaboard-proto-shell-v2.5.0-proto`; precaches
+  `app-proto.js` + auth files; MSAL CDN + Entra login endpoints bypassed like Firebase.
+- Icons `icon-192/512/512-maskable.png` copied in from the parent folder.
+
+### Verification done here
+- **Static diagnostics clean** on all four source files (no syntax/lint issues).
+- Prototype folder confirmed to contain all 9 files.
+- **Not** run in a browser here — a real Microsoft sign-in can't be completed on this
+  machine (known Windows shell quirk + no interactive browser). Live sign-in test is
+  Isaac's to run on the BT URL.
+
+### How to test (handed to Isaac)
+- **Level 1 — Live Server (local):** gate stays OFF (localhost ungated). Confirms the app
+  works in the sandbox — expect PROTOTYPE banner, the name prompt (not sign-in), working
+  board, and `ibproto_*` keys in DevTools (proves data isolation). No Sign out button.
+- **Level 2 — BT GitLab URL (the real test):** deploy the `prototypes/` folder so it serves
+  at the registered redirect URI, open in incognito. Expect: banner → "Sign in with
+  Microsoft" → sign in as `isaac.2.gera@bt.com` → board loads with real name + Sign out.
+  Any other BT account → "Access denied" screen. Watch for `AADSTS…` errors (redirect-URI /
+  platform mismatch) and console messages if sign-in loops.
+- Caveat flagged: the app-side allow-list matches the token UPN/username/email; if Isaac's
+  real sign-in UPN differs from `isaac.2.gera@bt.com`, the deny path may trigger for him —
+  report the exact UPN shown and the list gets adjusted.
+
+### Status / follow-ups
+- **Prototype only — live app untouched.** No version bump on the live app (stays v2.4.6);
+  the proto carries `2.5.0-proto`.
+- After Isaac verifies sign-in on the BT URL: port the finalized auth into the live
+  `ideaboard.html` + `app.js` in one pass, then do release chores (version bump, changelog,
+  PWA cache bump, docs, Ideas backlog sync). v3-modular port remains separate (TASK-02).
+- **Future phase (flagged, not scoped):** server-enforced lockdown of the Firebase DB so the
+  gate is a real boundary on the data, not just the UI.
+- Ideas.md left unchanged (app already `Built`; this is prototype work in progress on a
+  shipped app, not a status change — per Isaac).
+- Carried-forward items from Session 8 still open (manifest screenshots, Option A name-keyed
+  identity, TASK-02 v3 port).
+
+
+### Session 9 — Addendum (same session, post-test)
+**Level 2 Entra sign-in test: PASSED. MSAL CDN fix. Option B swap + restore.**
+
+#### Level 2 test result — PASSED
+- Deployed the prototype to the live BT GitLab Pages URL via **Option B**
+  (temporary CI swap: `cp prototypes/*.html prototypes/*.js ...`).
+- First attempt: gate engaged correctly but showed **"Sign-in problem: The
+  sign-in library could not be loaded."** The fail-closed behaviour worked
+  (board not exposed), but the MSAL library from `alcdn.msauth.net` was blocked
+  by the corporate proxy (Zscaler SSL interception — the same issue that
+  blocks pip).
+- **Fix:** bundled MSAL locally. Isaac downloaded `msal-browser.min.js`
+  (v2.35.0, ~370 KB) via his browser (which handles the proxy), saved into
+  `prototypes/`. HTML changed from CDN `<script>` to local file. SW precache
+  updated. The `*.js` CI glob publishes it automatically.
+- Second attempt after re-deploy: **full pass.** PROTOTYPE banner → "Sign in
+  with Microsoft" → BT/Microsoft login → redirect back → board loaded with
+  verified identity **"Isaac Gera (QVB C)"** from the token, Sign out button
+  present. App-side allow-list (`isaac.2.gera@bt.com`) matched, authorization
+  passed.
+
+#### Colleague added to allow-list
+- Added `srinivas.ballem@bt.com` to `allowedUsers` in `auth-config.js` so
+  Srinivas Ballem can test the sign-in gate too.
+
+#### Live app restored
+- Reverted `.gitlab-ci.yml` back to `cp *.html *.js *.json *.png public/`
+  (live app at root). Pipeline re-deployed. Confirmed live Idea Board back at
+  the BT URL: v2.4.6 badge, no gate, no PROTOTYPE banner, full board working,
+  Firebase presence showing 2 online.
+
+#### Key learnings (carry forward)
+- **MSAL CDN (`alcdn.msauth.net`) is blocked by Zscaler** on the BT network.
+  Any production deployment of the auth gate must bundle MSAL locally, not load
+  from CDN. The `msal-browser.min.js` file in `prototypes/` is the proven copy.
+- **`login.microsoftonline.com` IS reachable** — the sign-in redirect works fine.
+  Only the library CDN is blocked, not the auth endpoint itself.
+- **Option B (temporary swap) works** but is disruptive — the live app goes
+  offline for the team during the test. For future prototype testing, Option A
+  (separate project + second redirect URI) or Option C (localhost redirect URI)
+  is preferred if admin support is available.
+- The app registration's redirect URI (`pages.gitlab.prod.ec.devops.nat.bt.com/
+  ideaboard-c706fb/ideaboard.html`) maps to the `robt/app02752/IdeaBoard` team
+  project's Pages — confirmed via Deploy → Pages.
+
+#### Prototype files remain in `prototypes/` (12 files)
+`ideaboard.html`, `app-proto.js`, `auth.js`, `auth-config.js`,
+`msal-browser.min.js`, `manifest.json`, `sw.js`, `userguide.html`,
+`icon-192.png`, `icon-512.png`, `icon-512-maskable.png`,
+`SWAP-INSTRUCTIONS.md`.
+
+#### Next steps (carried forward from Session 9 main + this addendum)
+- **Port auth gate to live app** — when ready, fold the Entra gate into the
+  real `ideaboard.html` + `app.js`. Release chores: version bump (v2.5.0),
+  changelog, PWA cache bump, docs. Remember to bundle MSAL locally (not CDN).
+- **Decide the real authorized-subset mechanism** — Entra-side assignment
+  (admin-managed group) vs app-side allow-list vs both. Recommendation: Entra
+  "Assignment required" as the real boundary, app-side list as UX backup only.
+- **Firebase DB lockdown** — future phase; the gate currently protects the UI
+  only, not the raw database.
+- Carried-forward: manifest screenshots, Option A name-keyed identity,
+  TASK-02 v3 port.
