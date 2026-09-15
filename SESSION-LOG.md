@@ -941,3 +941,11 @@ legs already pushed `master:main`.
 When adding a remote, make sure the `pushall` leg targets the branch that remote's Pages
 actually builds. A push that "succeeds" can still leave Pages stale if it lands on the
 wrong branch (this is a cousin of the Session 3 runner-assignment trap).
+
+
+#### Resolution confirmed
+- Verified `git pushall` pushes `master -> main` on all three remotes in one command
+  (personal, team, github) — commit `799929a`.
+- Personal remote `master` branch deleted (redundant; `main` holds the full history,
+  nothing relied on it). Local `master` remains the working branch.
+- Final end-to-end push test done to confirm the flow works with `master` gone.
