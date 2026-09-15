@@ -898,3 +898,46 @@ Live app (`app.js`, root `ideaboard.html`) untouched; no version bump on the liv
 - Prototype now also carries Add User + self-delete guard + the Entra auth gate; the gate is the
   only remaining prototype-only piece, to be ported as v2.5.0 after the multi-machine gated test.
 - Ideas.md unchanged (app already `Built`).
+
+
+### Session 10 — Addendum 3 (same session): personal GitLab Pages branch drift + pushall fix
+
+#### Symptom
+After deploying v2.4.8, the **personal** GitLab Pages site showed neither the new version
+badge nor the header icon, while **team** and **github** both showed v2.4.8 correctly.
+Deploy -> Pages on the personal project showed a deployment timestamp ~1 week old.
+
+#### Root cause
+The `.gitlab-ci.yml` `pages` job only runs on the default branch
+(`rules: if $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH`). The personal project's Pages
+builds from **`main`**, but the old `pushall` alias pushed personal as `git push origin master`
+(local `master` -> remote `master`). So personal's `main` never moved and Pages never
+redeployed — it had been drifting for about a week. Team and github were fine because their
+legs already pushed `master:main`.
+
+#### Fix
+- Isaac merged `master` into `main` on the personal GitLab project; the latest changes
+  (v2.4.8) then showed on the personal Pages site.
+- Reconciled locally: `git fetch origin` + `git merge origin/main` (conflicts resolved,
+  concluded with `git commit --no-edit`). Verified `git show HEAD:app.js` still reports
+  `APP_VERSION = '2.4.8'` — merge kept the correct content.
+- Updated the global alias so ALL three legs push `master:main` (personal now matches team
+  + github):
+  ```
+  git config --global alias.pushall "!git push origin master:main && git push team master:main && git push github master:main"
+  ```
+- First `git pushall` after reconciling returned "Everything up-to-date" on all three (the
+  merge commit was already on the remotes) — so this doc change is the test commit to prove
+  the new `origin master:main` leg deploys personal Pages.
+
+#### Follow-ups
+- Confirm this push triggers a fresh personal Pages pipeline on `main` (green) with a
+  current timestamp, and all three sites still show v2.4.8.
+- Optional tidy: delete the now-unused personal remote `master` branch
+  (`git push origin --delete master`) once the alias is proven — nothing relies on it.
+  Local `master` stays as the working branch.
+
+#### Lesson (carry forward)
+When adding a remote, make sure the `pushall` leg targets the branch that remote's Pages
+actually builds. A push that "succeeds" can still leave Pages stale if it lands on the
+wrong branch (this is a cousin of the Session 3 runner-assignment trap).
