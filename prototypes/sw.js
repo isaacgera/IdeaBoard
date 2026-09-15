@@ -1,33 +1,36 @@
-/* Idea Board — Service Worker
- * Offline strategy: cache the APP SHELL only (HTML/JS/icons/manifest).
- * Firebase (Realtime DB + CDN SDK) is deliberately NOT cached — those requests
- * go to the network and, when offline/blocked, the app falls back to
- * localStorage (its existing behaviour). We never cache live DB data.
+/* Idea Board — Service Worker  [PROTOTYPE]
+ * Same shell-only strategy as the live SW, with two prototype differences:
+ *   1. Cache name is namespaced "ideaboard-proto-shell-" so it can never
+ *      collide with the live app's cache.
+ *   2. Precaches app-proto.js + the auth files instead of app.js.
  *
- * Bump CACHE_VERSION on every release so old caches are cleaned up on activate.
+ * Firebase AND the MSAL sign-in CDN are deliberately NOT cached — those go to
+ * the network. When offline/blocked the app falls back to localStorage.
+ *
+ * Bump CACHE_VERSION on every proto iteration so old caches clean up on activate.
  */
-const CACHE_VERSION = 'v2.4.8';
-const CACHE_NAME = `ideaboard-shell-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v2.5.0-proto';
+const CACHE_NAME = `ideaboard-proto-shell-${CACHE_VERSION}`;
 
-// App-shell assets to precache. app.js is cached at the exact query the HTML
-// requests (?v=2.4.8) so the cached URL matches the fetch URL.
+// App-shell assets to precache. Auth config/gate are included so the gate can
+// still render offline (it will fail closed with a clear message if the MSAL
+// CDN itself is unreachable on a gated host).
 const SHELL_ASSETS = [
   './',
   './ideaboard.html',
-  './app.js?v=2.4.8',
+  './app-proto.js',
+  './auth-config.js',
+  './auth.js',
+  './msal-browser.min.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './icon-512-maskable.png',
-  './screenshot-wide.png',
-  './screenshot-narrow.png'
+  './icon-512-maskable.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      // addAll is atomic; if one asset 404s the whole install fails, so keep
-      // this list to assets we know exist.
       cache.addAll(SHELL_ASSETS)
     ).then(() => self.skipWaiting())
   );
@@ -38,7 +41,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key.startsWith('ideaboard-shell-') && key !== CACHE_NAME)
+          .filter((key) => key.startsWith('ideaboard-proto-shell-') && key !== CACHE_NAME)
           .map((key) => caches.delete(key))
       )
     ).then(() => self.clients.claim())
@@ -48,34 +51,27 @@ self.addEventListener('activate', (event) => {
 // Requests we must never intercept/cache — let them hit the network directly.
 function isBypassed(url) {
   return (
-    url.hostname.includes('gstatic.com') ||       // Firebase SDK CDN
-    url.hostname.includes('firebaseio.com') ||     // Realtime DB
+    url.hostname.includes('gstatic.com') ||        // Firebase SDK CDN
+    url.hostname.includes('firebaseio.com') ||      // Realtime DB
     url.hostname.includes('firebase') ||
     url.hostname.includes('googleapis.com') ||
-    url.hostname.includes('google-analytics.com')
+    url.hostname.includes('google-analytics.com') ||
+    url.hostname.includes('msauth.net') ||          // MSAL library CDN
+    url.hostname.includes('login.microsoftonline.com') || // Entra sign-in
+    url.hostname.includes('login.microsoft.com') ||
+    url.hostname.includes('login.windows.net')
   );
 }
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-
-  // Only handle GET; never cache POST/PUT etc.
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-
-  // Leave Firebase / cross-origin CDN traffic entirely to the network.
   if (isBypassed(url)) return;
-
-  // Only manage our own origin's shell assets.
   if (url.origin !== self.location.origin) return;
-
-  // Don't intercept the browser's default /favicon.ico probe — let it hit the
-  // network (404 is harmless) rather than the SW producing a rejected promise.
   if (url.pathname.endsWith('/favicon.ico')) return;
 
-  // Navigation requests: serve the cached shell, fall back to network,
-  // and if both miss (offline, uncached route) serve the cached HTML shell.
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).catch(() =>

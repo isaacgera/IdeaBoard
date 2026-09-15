@@ -1,35 +1,23 @@
-// Idea Board - App Logic
-// Changelog:
-//   v2.4.8 (Sep 15, 2026): Manage Users. (1) Add User — admins can pre-add a user
-//           by name with a role (Contributor/Admin); reuses the deterministic
-//           local_<slug> id so the role links up when that name arrives; updates
-//           the role instead of duplicating if the name exists. (2) Self-delete
-//           guard — an admin can no longer delete their own account (Delete hidden
-//           on their own row + blocked in deleteUser), which previously stripped
-//           their role and locked them out. Ported from prototype.
-//   v2.4.7 (Sep 15, 2026): RBAC fixes. (1) Promoted admins now KEEP admin rights —
-//           roles are stored in the DB as the source of truth; registerUser() reads
-//           the existing record and preserves it instead of recomputing from the
-//           hardcoded name and clobbering a promoted role on reconnect. The
-//           hardcoded ADMIN_NAMES is now only a first-admin bootstrap seed.
-//           (2) No duplicate user records — user ids are derived deterministically
-//           from the name (local_<slug>), so re-entering the same name reuses the
-//           same record. Added a last-admin demote guard. Ported from prototype.
-//   v2.4.6 (Sep 3, 2026): PWA layer added (manifest, service worker, icons) for
-//           installability + offline app-shell. Firebase intentionally not cached;
-//           app falls back to localStorage when offline/blocked. Added APP_VERSION.
-//           Accessibility pass to Lighthouse 100 (ARIA labels on all controls,
-//           <main> landmark, WCAG-AA badge/primary contrast). Manifest screenshots.
-//           Tooltips + ARIA across tabs/cards/table: stat cards keyboard-activatable
-//           (role=button + Enter/Space), sortable headers get aria-sort, vote
-//           buttons labelled, Manage Users deduped by case-insensitive name.
-//   v2.3   : UI polish (header, dashboard, Manage Data modal, online badge).
-//   v1.3   : RBAC - Admin (Isaac) full privileges; contributors edit/delete own only.
+// Idea Board - App Logic  [PROTOTYPE — app-proto.js]
+// ============================================================
+// This is a faithful copy of the live app.js with THREE prototype changes:
+//   1. localStorage keys are namespaced with an "ibproto_" prefix so the
+//      sandbox can never read or overwrite the live app's real data.
+//   2. The app no longer auto-boots at the bottom. init()+checkFirstVisit()
+//      are exposed as window.IB_startApp(), called by the Entra auth gate
+//      (auth.js) only after a verified + authorized sign-in (on gated hosts),
+//      or immediately on ungated hosts (file://, localhost, GitHub copy).
+//   3. loadUser() seeds identity from the verified Entra token when present
+//      (window.IB_AUTH_IDENTITY), instead of the name prompt. Falls back to
+//      the original prompt() on ungated/local runs where there's no token.
+// Everything else mirrors app.js v2.4.6.
+// ============================================================
 (function() {
 'use strict';
 
 // Single source of truth for the app version (semantic versioning).
-var APP_VERSION = '2.4.8';
+// Proto tag so it can never be mistaken for the shipped app.
+var APP_VERSION = '2.5.0-proto';
 
 var firebaseConfig = {
   apiKey: "AIzaSyDhHQAxUU-Dsvh6seA5USQugR7nCHvwnSI",
@@ -41,17 +29,16 @@ var firebaseConfig = {
   appId: "1:163546732868:web:8689079b56b21850785f11"
 };
 
-// BOOTSTRAP ADMIN SEED (case-insensitive match).
-// This is NO LONGER the source of truth for who is an admin — roles now live in
-// the database (see isAdmin/registerUser). This list only mints the *first*
-// admin so there is someone able to promote others; once a user has a stored
-// role, the DB wins (a seeded name can even be demoted). When the Entra auth
-// gate lands, the first admin can instead be seeded by UPN via BOOTSTRAP_ADMIN_UPNS.
-var ADMIN_NAMES = ['isaac gera'];
+// Prototype localStorage namespace — keeps sandbox data isolated from the live app.
+var LS = {
+  data: 'ibproto_data',
+  user: 'ibproto_user',
+  theme: 'ibproto_theme',
+  tour: 'ibproto_tour_done'
+};
 
-// Optional: seed the first admin by verified Entra UPN/email (used once the
-// auth gate is ported). Empty for now; the name seed above covers current use.
-var BOOTSTRAP_ADMIN_UPNS = [];
+// Hardcoded admin name (case-insensitive match)
+var ADMIN_NAMES = ['isaac gera'];
 
 var state = {
   ideas: {},
@@ -136,43 +123,50 @@ function initFirebase() {
 // THEME (Dark/Light)
 // ============================================================
 function loadTheme() {
-  var saved = localStorage.getItem('ib_theme');
+  var saved = localStorage.getItem(LS.theme);
   state.darkMode = (saved === 'dark');
   applyTheme();
 }
 
 function toggleTheme() {
   state.darkMode = !state.darkMode;
-  localStorage.setItem('ib_theme', state.darkMode ? 'dark' : 'light');
+  localStorage.setItem(LS.theme, state.darkMode ? 'dark' : 'light');
   applyTheme();
 }
 
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : 'light');
   var btn = document.getElementById('theme-toggle');
-  if (btn) btn.textContent = state.darkMode ? '☀️' : '🌙';
+  if (btn) btn.textContent = state.darkMode ? '\u2600\uFE0F' : '\uD83C\uDF19';
 }
 
 // ============================================================
 // USER MANAGEMENT
 // ============================================================
+// PROTOTYPE: when a verified Entra identity is present (gated host, after
+// successful authorized sign-in), seed the current user from the token instead
+// of prompting. On ungated/local runs there is no token, so we keep the original
+// name-prompt behaviour so the sandbox still works offline.
 function loadUser() {
-  var saved = localStorage.getItem('ib_user');
+  var identity = window.IB_AUTH_IDENTITY || null;
+
+  if (identity && identity.name) {
+    // Use a stable per-user id derived from the token (oid/sub) so the same
+    // person keeps the same id across sessions/devices.
+    var stableId = identity.oid ? ('entra_' + identity.oid) : generateId();
+    state.currentUser = {
+      id: stableId,
+      name: identity.name,
+      username: identity.username || ''
+    };
+    localStorage.setItem(LS.user, JSON.stringify(state.currentUser));
+    updateUserDisplay();
+    return;
+  }
+
+  var saved = localStorage.getItem(LS.user);
   if (saved) { state.currentUser = JSON.parse(saved); } else { promptUser(); }
   updateUserDisplay();
-}
-
-// Normalise a name into a stable slug for deterministic ids.
-function slugifyName(s) {
-  return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-}
-
-// Deterministic id from a name: the same typed name always resolves to the same
-// record, so re-entering your name never spawns a duplicate user. (Genuinely
-// different names stay separate, by design.)
-function localIdForName(name) {
-  var slug = slugifyName(name);
-  return slug ? ('local_' + slug) : generateId();
 }
 function promptUser() {
   var name = '';
@@ -180,36 +174,25 @@ function promptUser() {
     name = prompt('Welcome to Idea Board!\n\nPlease enter your full name to continue:');
     if (name === null) name = ''; // Cancel pressed, keep looping
   }
-  var trimmed = name.trim();
-  // Deterministic id from the name -> no duplicate records for the same person.
-  state.currentUser = { id: localIdForName(trimmed), name: trimmed };
-  localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
+  state.currentUser = { id: generateId(), name: name.trim() };
+  localStorage.setItem(LS.user, JSON.stringify(state.currentUser));
   updateUserDisplay();
 }
 function changeUser() {
   var name = prompt('Enter your name:', state.currentUser ? state.currentUser.name : '');
   if (name === null) return;
   if (!name.trim()) name = 'Anonymous';
-  var trimmed = name.trim();
+  state.currentUser.name = name.trim();
+  localStorage.setItem(LS.user, JSON.stringify(state.currentUser));
 
-  // Map to the deterministic id for this name so switching names reuses the
-  // right record (and never creates a duplicate for a name already seen).
-  state.currentUser = { id: localIdForName(trimmed), name: trimmed };
-  localStorage.setItem('ib_user', JSON.stringify(state.currentUser));
+  // Immediately update local role (fix for stale role after switch)
+  var isHardcodedAdmin = ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1;
+  state.users[state.currentUser.id] = { name: state.currentUser.name, role: isHardcodedAdmin ? 'admin' : 'contributor', lastSeen: Date.now() };
 
   if (state.firebaseReady) {
     db.ref('presence/' + state.currentUser.id).update({ name: state.currentUser.name });
-    // registerUser() reads the existing record and PRESERVES its role, so a
-    // previously-promoted name stays admin and we never clobber roles here.
     registerUser();
-  } else {
-    // Local path: preserve any stored role for this id; seed by bootstrap only
-    // if brand new. Never blindly downgrade.
-    var existing = state.users[state.currentUser.id];
-    var role = (existing && existing.role) ? existing.role : (isBootstrapAdmin() ? 'admin' : 'contributor');
-    state.users[state.currentUser.id] = { name: trimmed, role: role, lastSeen: Date.now() };
   }
-
   // Close any open modal (stale permission state)
   closeModal();
   // Clear bulk selection
@@ -233,25 +216,12 @@ function updateUserDisplay() {
 // ============================================================
 function isAdmin() {
   if (!state.currentUser) return false;
-  // DB is the source of truth: use the stored role if the user has a record.
-  // This means a promotion sticks and a demotion sticks — even for a seeded name.
+  // Check hardcoded admin names
+  if (ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1) return true;
+  // Check promoted admins from Firebase users list
   var userRecord = state.users[state.currentUser.id];
-  if (userRecord && userRecord.role) return userRecord.role === 'admin';
-  // No stored record yet -> fall back to the bootstrap seed so the very first
-  // admin can exist and start promoting others.
-  return isBootstrapAdmin();
-}
-
-// True only for the seed identities (name or verified UPN). Used to mint the
-// first admin before any role is stored; NOT the ongoing source of truth.
-function isBootstrapAdmin() {
-  if (!state.currentUser) return false;
-  var nameMatch = ADMIN_NAMES.indexOf((state.currentUser.name || '').toLowerCase()) !== -1;
-  var upn = (state.currentUser.username || '').toLowerCase();
-  var upnMatch = upn && BOOTSTRAP_ADMIN_UPNS
-    .map(function (u) { return String(u).toLowerCase(); })
-    .indexOf(upn) !== -1;
-  return nameMatch || upnMatch;
+  if (userRecord && userRecord.role === 'admin') return true;
+  return false;
 }
 
 function canEdit(idea) {
@@ -271,34 +241,16 @@ function canChangeStatus(idea) {
 
 function registerUser() {
   if (!state.firebaseReady || !state.currentUser) return;
-  var ref = db.ref('users/' + state.currentUser.id);
-  // Read the existing record FIRST so we never clobber a role another admin set.
-  // - Existing record  -> preserve its role (promotion/demotion sticks); just
-  //   refresh name + lastSeen.
-  // - No record yet     -> brand-new user: seed 'admin' only if they're a
-  //   bootstrap seed, otherwise 'contributor'.
-  ref.once('value').then(function (snap) {
-    var existing = snap.val();
-    var role;
-    if (existing && existing.role) {
-      role = existing.role;
-    } else {
-      role = isBootstrapAdmin() ? 'admin' : 'contributor';
-    }
-    var record = { name: state.currentUser.name, role: role, lastSeen: Date.now() };
-    ref.set(record);
-    state.users[state.currentUser.id] = record;
-    updateUserDisplay();
-    render();
-  }).catch(function () {
-    // If the read fails, still avoid a blind downgrade: seed by bootstrap only.
-    var role = isBootstrapAdmin() ? 'admin' : 'contributor';
-    var record = { name: state.currentUser.name, role: role, lastSeen: Date.now() };
-    ref.set(record);
-    state.users[state.currentUser.id] = record;
-    updateUserDisplay();
-    render();
+  // Determine role from hardcoded names ONLY (not from DB, to avoid circular reference)
+  var isHardcodedAdmin = ADMIN_NAMES.indexOf(state.currentUser.name.toLowerCase()) !== -1;
+  var role = isHardcodedAdmin ? 'admin' : 'contributor';
+  db.ref('users/' + state.currentUser.id).set({
+    name: state.currentUser.name,
+    role: role,
+    lastSeen: Date.now()
   });
+  // Update local state immediately so isAdmin() works correctly
+  state.users[state.currentUser.id] = { name: state.currentUser.name, role: role, lastSeen: Date.now() };
 }
 
 function loadUsers() {
@@ -307,46 +259,6 @@ function loadUsers() {
     state.users = snap.val() || {};
     updateUserDisplay(); // refresh in case role changed
   });
-}
-
-// Manually add a user (admin only). Creates a record under the deterministic
-// local id so a person who later enters this exact name inherits the pre-assigned
-// role. Useful for testing and pre-granting a role.
-// NOTE: once the Entra gate lands, a real user's id is entra_<oid>, which can't
-// be predicted from a name — so a manually-added record won't auto-merge with
-// their real sign-in there. This is primarily for local/testing + pre-assigning.
-function addUser() {
-  if (!isAdmin()) { showToast('Admin access required'); return; }
-  var nameInput = document.getElementById('add-user-name');
-  var roleSelect = document.getElementById('add-user-role');
-  if (!nameInput) return;
-  var name = (nameInput.value || '').trim();
-  if (!name) { showToast('Enter a name'); return; }
-  var role = (roleSelect && roleSelect.value === 'admin') ? 'admin' : 'contributor';
-
-  // If a record for this name already exists, update its role instead of
-  // creating a duplicate.
-  var existingIds = Object.keys(state.users).filter(function (uid) {
-    return ((state.users[uid] || {}).name || '').trim().toLowerCase() === name.toLowerCase();
-  });
-  if (existingIds.length) {
-    existingIds.forEach(function (uid) {
-      if (state.firebaseReady) { db.ref('users/' + uid + '/role').set(role); }
-      if (state.users[uid]) state.users[uid].role = role;
-    });
-    showToast('"' + name + '" already existed — role set to ' + role);
-    if (!state.firebaseReady) render();
-    showManageUsers();
-    return;
-  }
-
-  var uid = localIdForName(name);
-  var record = { name: name, role: role, lastSeen: Date.now() };
-  if (state.firebaseReady) { db.ref('users/' + uid).set(record); }
-  state.users[uid] = record;
-  showToast('Added ' + name + ' as ' + role);
-  if (!state.firebaseReady) render();
-  showManageUsers();
 }
 
 function promoteUser(userId) {
@@ -362,32 +274,12 @@ function promoteUser(userId) {
 
 function demoteUser(userId) {
   if (!isAdmin()) { showToast('Only admins can demote users'); return; }
-  // Guard: never demote the last remaining admin — that would lock everyone out
-  // of admin functions with no way back (roles are DB-driven now). Count admins
-  // by distinct name so merged records don't over-count.
-  if (adminNameCount() <= 1 && groupRoleForId(userId) === 'admin') {
-    showToast('Cannot demote the last admin. Promote someone else first.');
-    return;
-  }
   idsForSameName(userId).forEach(function(uid) {
     if (state.firebaseReady) { db.ref('users/' + uid + '/role').set('contributor'); }
     if (state.users[uid]) state.users[uid].role = 'contributor';
   });
   showToast('User demoted to contributor');
   showManageUsers();
-}
-
-// Number of distinct admins (by normalised name), so merged duplicate records
-// for one person count once.
-function adminNameCount() {
-  return getDedupedUsers().filter(function (g) { return g.role === 'admin'; }).length;
-}
-
-// The (deduped) role for the group that a given user id belongs to.
-function groupRoleForId(userId) {
-  var target = ((state.users[userId] || {}).name || '').trim().toLowerCase();
-  var g = getDedupedUsers().filter(function (grp) { return grp.name.trim().toLowerCase() === target; })[0];
-  return g ? g.role : 'contributor';
 }
 
 function showOnlineUsers() {
@@ -451,63 +343,40 @@ function showManageUsers() {
   if (!isAdmin()) { showToast('Admin access required'); return; }
   var html = '<div class="modal-header"><h2>Manage Users</h2><button class="close-btn" onclick="IB.closeModal()" aria-label="Close">&times;</button></div>';
   html += '<div class="modal-body">';
-  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Manage team members. Roles are stored per user, so promotions and demotions persist. Promote grants full admin rights; Demote returns a user to contributor. Edit renames the user (and remaps their ideas). Delete removes the user (their ideas transfer to you). The board keeps at least one admin at all times.</p>';
+  html += '<p style="font-size:.75rem;color:var(--text-light);margin-bottom:1rem">Manage team members. Entries are grouped by name (case-insensitive). Edit renames the user (and remaps their ideas). Delete removes the user (their ideas transfer to admin). Hardcoded admin (' + ADMIN_NAMES.join(', ') + ') cannot be modified.</p>';
 
   var groups = getDedupedUsers();
   if (!groups.length) {
     html += '<p style="font-size:.82rem;color:var(--text-light)">No users registered yet. Users appear here after they access the board.</p>';
   } else {
     html += '<div style="margin-bottom:.5rem">';
-    var adminCount = groups.filter(function (x) { return x.role === 'admin'; }).length;
     groups.forEach(function(g) {
-      var isSelf = state.currentUser && g.ids.indexOf(state.currentUser.id) !== -1;
+      var isHardcoded = ADMIN_NAMES.indexOf(g.name.toLowerCase()) !== -1;
       var roleLabel = g.role === 'admin' ? '<span style="color:var(--primary);font-weight:600">Admin</span>' : '<span style="color:var(--text-light)">Contributor</span>';
       // Representative id for actions; handlers resolve all ids sharing this name.
       var uid = g.ids[0];
+      var dupNote = g.ids.length > 1 ? ' <span style="font-size:.62rem;color:var(--text-light)" title="' + g.ids.length + ' records merged">(' + g.ids.length + '\u00d7)</span>' : '';
       html += '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;flex-wrap:wrap">';
-      html += '<span style="flex:1;font-size:.82rem;font-weight:500;min-width:100px">' + escapeHtml(g.name || 'Unknown') + (isSelf ? ' <span style="font-size:.62rem;color:var(--text-light)">(you)</span>' : '') + '</span>';
+      html += '<span style="flex:1;font-size:.82rem;font-weight:500;min-width:100px">' + escapeHtml(g.name || 'Unknown') + dupNote + '</span>';
       html += '<span style="font-size:.72rem">' + roleLabel + '</span>';
-      if (g.role === 'admin') {
-        // Protect the last admin from being demoted (would lock everyone out).
-        if (adminCount > 1) {
+      if (!isHardcoded) {
+        if (g.role === 'admin') {
           html += '<button class="btn btn-sm" onclick="IB.demoteUser(\'' + uid + '\')">Demote</button>';
         } else {
-          html += '<span style="font-size:.62rem;color:var(--text-light)" title="Promote another admin before demoting the last one">(last admin)</span>';
+          html += '<button class="btn btn-sm btn-primary" onclick="IB.promoteUser(\'' + uid + '\')">Promote</button>';
         }
+        html += '<button class="btn btn-sm" onclick="IB.editUser(\'' + uid + '\')" title="Rename user">Edit</button>';
+        html += '<button class="btn btn-sm btn-danger" onclick="IB.deleteUser(\'' + uid + '\')" title="Delete user (ideas transfer to admin)">Delete</button>';
       } else {
-        html += '<button class="btn btn-sm btn-primary" onclick="IB.promoteUser(\'' + uid + '\')">Promote</button>';
-      }
-      html += '<button class="btn btn-sm" onclick="IB.editUser(\'' + uid + '\')" title="Rename user">Edit</button>';
-      // No self-delete: deleting the account you're acting as strips your own role.
-      if (!isSelf) {
-        html += '<button class="btn btn-sm btn-danger" onclick="IB.deleteUser(\'' + uid + '\')" title="Delete user (ideas transfer to you)">Delete</button>';
+        html += '<span style="font-size:.65rem;color:var(--text-light)">(hardcoded)</span>';
       }
       html += '</div>';
     });
     html += '</div>';
   }
-
-  // Add User — pre-provision a user / role (mainly for local + testing).
-  html += '<div class="detail-section" style="margin-top:1rem"><h4>Add User</h4>';
-  html += '<p style="font-size:.68rem;color:var(--text-light);margin-bottom:.5rem">Pre-adds a user by name with a role. The role takes effect when they enter that exact name (or sign in locally). On the Microsoft sign-in board, real access is governed by sign-in + the allow-list, so this is mainly for testing and pre-assigning roles.</p>';
-  html += '<div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">';
-  html += '<input type="text" id="add-user-name" placeholder="Full name" aria-label="New user name" style="flex:1;min-width:140px;padding:.4rem .7rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface);color:var(--text)">';
-  html += '<select id="add-user-role" aria-label="New user role" style="padding:.4rem .5rem;border:1px solid var(--border);border-radius:6px;font-size:.82rem;background:var(--surface);color:var(--text)"><option value="contributor">Contributor</option><option value="admin">Admin</option></select>';
-  html += '<button class="btn btn-primary btn-sm" onclick="IB.addUser()">Add</button>';
-  html += '</div></div>';
-
   html += '</div>';
   html += '<div class="modal-footer"><button class="btn" onclick="IB.closeModal()">Close</button></div>';
   showModal(html);
-}
-
-// True if the given user id resolves to the current user (by id, or by the same
-// name — since merged records share a name). Used to block self-destructive acts.
-function isSelfUser(userId) {
-  if (!state.currentUser) return false;
-  if (userId === state.currentUser.id) return true;
-  var target = ((state.users[userId] || {}).name || '').trim().toLowerCase();
-  return !!target && target === (state.currentUser.name || '').trim().toLowerCase();
 }
 
 // Resolve every user id that shares the same (case-insensitive) name as the given id.
@@ -553,16 +422,13 @@ function editUser(userId) {
     if (changed) saveIdea(idea, true);
   });
 
-  showToast('User renamed: ' + oldName + ' → ' + newName);
+  showToast('User renamed: ' + oldName + ' \u2192 ' + newName);
   if (!state.firebaseReady) render();
   showManageUsers();
 }
 
 function deleteUser(userId) {
   if (!isAdmin()) { showToast('Admin access required'); return; }
-  // Block self-deletion: deleting the account you're acting as is nonsensical and
-  // strips your own role, locking you out (a promoted admin loses admin entirely).
-  if (isSelfUser(userId)) { showToast("You can't delete your own account."); return; }
   var user = state.users[userId];
   if (!user) return;
   var userName = user.name;
@@ -614,8 +480,8 @@ function saveCategories() {
   if (state.firebaseReady) { db.ref('categories').set(state.categories); } else { saveToLocalStorage(); }
   renderCategoryFilter();
 }
-function loadFromLocalStorage() { var d = localStorage.getItem('ib_data'); if (d) { var p = JSON.parse(d); state.ideas = p.ideas || {}; if (p.categories) state.categories = p.categories; }}
-function saveToLocalStorage() { localStorage.setItem('ib_data', JSON.stringify({ ideas: state.ideas, categories: state.categories })); }
+function loadFromLocalStorage() { var d = localStorage.getItem(LS.data); if (d) { var p = JSON.parse(d); state.ideas = p.ideas || {}; if (p.categories) state.categories = p.categories; }}
+function saveToLocalStorage() { localStorage.setItem(LS.data, JSON.stringify({ ideas: state.ideas, categories: state.categories })); }
 
 // ============================================================
 // AUDIT LOG
@@ -1463,7 +1329,7 @@ var _tourSteps = [
   { target: '.view-toggle', title: 'Switch Views', text: 'Toggle between Board view (kanban columns) and List view (sortable table with bulk actions).' },
   { target: '.search-box', title: 'Search & Filter', text: 'Search by title, description, or submitter. Use the dropdowns to filter by category or priority.' },
   { target: '#board-content', title: 'Your Board', text: 'Drag cards between columns to change status. Click any card to see details, comment, or vote. In List view, use checkboxes for bulk actions.' },
-  { target: '.user-bar', title: 'Your Identity', text: 'Your name appears here. Use "Switch" to change it. Toggle dark/light mode, or click "Tour" to replay this guide anytime.' }
+  { target: '.user-bar', title: 'Your Identity', text: 'Your name appears here (from your Microsoft sign-in on the BT site). Toggle dark/light mode, or click "Tour" to replay this guide anytime.' }
 ];
 var _tourCurrent = 0;
 
@@ -1486,7 +1352,7 @@ function tourPrev() {
 
 function tourEnd() {
   document.getElementById('tour-overlay').classList.remove('active');
-  localStorage.setItem('ib_tour_done', '1');
+  localStorage.setItem(LS.tour, '1');
 }
 
 function showTourStep() {
@@ -1533,7 +1399,7 @@ function showTourStep() {
 }
 
 function checkFirstVisit() {
-  if (!localStorage.getItem('ib_tour_done')) {
+  if (!localStorage.getItem(LS.tour)) {
     setTimeout(startTour, 800); // slight delay so the page loads first
   }
 }
@@ -1541,8 +1407,20 @@ function checkFirstVisit() {
 // ============================================================
 // PUBLIC API
 // ============================================================
-window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,showOnlineUsers:showOnlineUsers,addUser:addUser,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser,bulkToggle:bulkToggle,bulkToggleAll:bulkToggleAll,bulkClear:bulkClear,bulkChangeStatus:bulkChangeStatus,bulkChangePriority:bulkChangePriority,bulkChangeCategory:bulkChangeCategory,bulkDelete:bulkDelete,startTour:startTour,tourNext:tourNext,tourPrev:tourPrev,tourEnd:tourEnd};
+window.IB = {showAddIdea:showAddIdea,showEditIdea:showEditIdea,showDetail:showDetail,submitIdea:submitIdea,confirmDelete:confirmDelete,closeModal:closeModal,setView:setView,filterIdeas:filterIdeas,sortBy:sortBy,exportData:exportData,importData:importData,handleImport:handleImport,changeUser:changeUser,showCategoryManager:showCategoryManager,addCategory:addCategory,removeCategory:removeCategory,toggleTheme:toggleTheme,upvote:upvote,downvote:downvote,addComment:addComment,deleteComment:deleteComment,dashFilter:dashFilter,dashHover:dashHover,dashHoverEnd:dashHoverEnd,showManageData:showManageData,showManageUsers:showManageUsers,showOnlineUsers:showOnlineUsers,promoteUser:promoteUser,demoteUser:demoteUser,editUser:editUser,deleteUser:deleteUser,bulkToggle:bulkToggle,bulkToggleAll:bulkToggleAll,bulkClear:bulkClear,bulkChangeStatus:bulkChangeStatus,bulkChangePriority:bulkChangePriority,bulkChangeCategory:bulkChangeCategory,bulkDelete:bulkDelete,startTour:startTour,tourNext:tourNext,tourPrev:tourPrev,tourEnd:tourEnd,signOut:function(){ if (window.IB_AUTH && window.IB_AUTH.signOut) window.IB_AUTH.signOut(); }};
 
-init();
-checkFirstVisit();
+// ============================================================
+// GATE-CONTROLLED BOOT  [PROTOTYPE]
+// ============================================================
+// The app no longer starts itself. The Entra auth gate (auth.js) calls
+// window.IB_startApp() after a verified + authorized sign-in on gated hosts,
+// or immediately on ungated hosts (file://, localhost, GitHub public copy).
+// Guarded so it can only ever run once.
+var _booted = false;
+window.IB_startApp = function() {
+  if (_booted) return;
+  _booted = true;
+  init();
+  checkFirstVisit();
+};
 })();

@@ -477,3 +477,424 @@ Lighthouse 100 along the way, plus a few UX fixes raised during testing.
 
 ### Version
 - v2.3 → **v2.4.6**
+
+### Addendum — Sep 3, 2026 (same session, post-deploy)
+**GitLab Pages: missing PNG assets (header icon + PWA icons)**
+
+After deploying v2.4.6, the header brand icon (`icon-192.png`) was missing on the
+GitLab Pages site (worked on GitHub Pages and Live Server). Root cause: the CI
+`.gitlab-ci.yml` `pages` job only copied `*.html *.js *.json` into `public/` — no
+`*.png` files were published. This also meant the PWA manifest icons and screenshots
+were 404-ing on GitLab.
+
+**Fix:** added `*.png` to the `cp` line in `.gitlab-ci.yml`:
+```
+cp *.html *.js *.json *.png public/
+```
+Note: this also copies the unused `ideaboard.png` (old wooden-blocks banner) — harmless,
+a few extra KB. Clean it up in a future tidy pass if desired.
+
+**Gotcha to remember:** whenever a new static asset type is added (e.g. `.svg`, `.webp`),
+the CI copy glob must be extended, otherwise it deploys on GitHub but silently 404s on
+GitLab Pages.
+## Session 7 — PWA readiness audit + pending polish edits
+
+### PWA Readiness audit (root monolith, v2.4.6) — PASSED
+- Audited the live entry point `ideaboard.html` (confirmed as the deployed file via
+  `.gitlab-ci.yml` + Session 6). Verdict: **PWA-ready**, no blockers, no should-fix gaps.
+- Confirmed by direct file reads (not just grep): manifest linked in `<head>`, theme-color
+  + icons + apple-touch-icon metas present; `sw.js` exists AND is registered
+  (`ideaboard.html` ~line 352), feature-guarded and http-only; versioned cache
+  (`ideaboard-shell-v2.4.6`) with activate-cleanup; shell precache + stale-while-revalidate;
+  Firebase deliberately bypassed. Icons 192/512/512-maskable present on disk.
+- Note: v3-modular still has NO PWA layer — must be ported before it could ship (SPEC-tasks TASK-02).
+
+### Pending polish edits (NOT yet applied — do in a session with file-editing enabled)
+Two optional items from the audit; prepared, drop-in, low-risk (Default mode).
+
+1. **Surface APP_VERSION in the header** (code):
+   - `ideaboard.html` — add after the `.last-updated::before` CSS rule (~line 50):
+     ```css
+     .version-badge { margin-left: .4rem; font-size: .6rem; font-weight: 600; color: var(--primary); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: .05rem .4rem; letter-spacing: .3px; vertical-align: middle; }
+     ```
+   - `ideaboard.html` — replace the header `<h1>` line with:
+     ```html
+     <h1>Idea Board <span class="team-name">Architecture Middleware Integration Team</span> <span class="version-badge" id="app-version" title="App version"></span></h1>
+     ```
+   - `app.js` — add `showAppVersion();` as the last line of `init()`, then add the helper:
+     ```javascript
+     // Surface the single-source-of-truth version constant in the header.
+     function showAppVersion() {
+       var el = document.getElementById('app-version');
+       if (el) {
+         el.textContent = 'v' + APP_VERSION;
+         el.title = 'Idea Board v' + APP_VERSION;
+       }
+     }
+     ```
+   - Reads from the `APP_VERSION` constant so the badge can't drift on release. Uses existing
+     tokens — works in light + dark. No version bump needed (display-only, still v2.4.6).
+
+2. **Replace placeholder manifest screenshots** (manual, no code):
+   - Capture real grabs and save over `screenshot-wide.png` (1280×720) and
+     `screenshot-narrow.png` (720×1280) — manifest already points at those filenames.
+
+### Verify (next session, after applying)
+- Serve via Live Server (NOT `file://`). Confirm `v2.4.6` badge renders in the header in both
+  light and dark themes; console clean. Optional: re-run Lighthouse PWA check.
+
+### Not done / notes
+- Neither edit applied this session (tools were read-only — no write access).
+- Ideas.md left unchanged (app already `Built`; this is display polish, not a status change).
+
+
+## Session 8 — Sep 4, 2026
+**Applied the version badge (Session 7 pending item 1) + deployed**
+
+### Goal
+Apply the first of the two Session 7 pending polish items — surface the `APP_VERSION`
+constant in the header — now that file-editing tools were available. Default mode,
+display-only, no version bump (stays v2.4.6).
+
+### What Was Done (3 drop-in edits, exactly as prepped in Session 7)
+- **`ideaboard.html`** — added the `.version-badge` CSS rule after `.last-updated::before`
+  (uses existing tokens: `--primary`, `--surface-alt`, `--border` — so it themes cleanly
+  in light + dark). Added `<span class="version-badge" id="app-version" title="App version">`
+  to the header `<h1>`, just after the `.team-name` span.
+- **`app.js`** — added `showAppVersion();` as the last line of `init()`, plus the helper
+  that writes `'v' + APP_VERSION` into `#app-version` (and its title). Reads from the
+  single-source-of-truth constant so the badge can't drift from the real version on release.
+
+### Verification
+- Isaac confirmed and then committed + pushed (`git pushall` → origin, team, github),
+  redeploying all three Pages sites. Browser eyeball of the badge was done on Isaac's side
+  (Live Server) — Kiro can't run a browser here (known Windows shell quirk).
+
+### Version
+- Unchanged: **v2.4.6** (display-only change).
+
+### Still pending (carried forward)
+- **Session 7 item 2:** replace placeholder manifest screenshots with real grabs
+  (`screenshot-wide.png` 1280×720, `screenshot-narrow.png` 720×1280) — manual, no code.
+- **Option A:** proper name-keyed user identity + Firebase data migration (own Quick Spec,
+  needs a data backup first).
+- **TASK-02:** port ALL Session 6 + this badge change into v3-modular before it could ship,
+  then re-verify (Lighthouse 100 + offline).
+- Ideas.md unchanged (app already `Built`; this was display polish, not a status change).
+
+
+## Session 9 — Sep 11, 2026
+**Entra ID (Azure AD) sign-in gate — PROTOTYPE build**
+
+### Goal
+Restrict access to the BT GitLab-hosted Idea Board so only verified + authorized BT
+users can open it, via Azure AD / Microsoft Entra ID. Built as a **prototype first**
+(per the prototype-first workflow) — nothing touched the live app. Quick Spec mode.
+
+### Decisions locked (agreed up front)
+1. **Authorized subset**, not just "any signed-in user". Real enforcement is intended
+   to be Entra-side ("Assignment required" + assigned users/groups); the app also has a
+   secondary app-side allow-list for a clean "Access denied" screen (UX gate, not a hard
+   boundary on its own).
+2. **Redirect URI:** `https://pages.gitlab.prod.ec.devops.nat.bt.com/ideaboard-c706fb/ideaboard.html`
+   — registered as **Single-page application** platform (confirmed by Isaac).
+3. **Firebase DB lockdown = out of scope for now.** This gate protects the APP (who can
+   open the page), NOT the raw Firebase Realtime DB (rules still open — someone hitting the
+   DB URL directly is unaffected). Noted as a future phase. Isaac confirmed data not
+   sensitive for now.
+4. **Prototype first**, then port to live once it proves out on the real BT URL.
+
+### Architecture / approach
+- **MSAL.js** (browser, `msal-browser 2.38.3` from Microsoft CDN), **public-client PKCE
+  flow** — no client secret anywhere (correct + required for a static SPA; keeps secrets
+  discipline). Client ID + Tenant ID are not secrets and live in the config file.
+- **Host-conditional gate:** auth engages ONLY on gated hosts (the BT GitLab origin).
+  On `file://`, `localhost`/Live Server, and the public GitHub copy the app stays open, so
+  the same codebase runs everywhere. localhost deliberately LEFT OUT of the gated list, so
+  local prototype testing stays friction-free (no login) — agreed with Isaac.
+- **Boot flow:** app no longer self-boots. `app-proto.js` exposes `window.IB_startApp()`;
+  the gate (`auth.js`) calls it only after a verified + authorized sign-in on gated hosts,
+  or immediately on ungated hosts. Fails **closed** if MSAL can't load or config is unset.
+- **Identity wiring:** on a gated host, `loadUser()` seeds the current user from the
+  verified token (name + UPN, stable id from `oid`/`sub`) instead of the name prompt.
+  Off-gate it keeps the original prompt so the sandbox still works offline.
+
+### Files created — all under `Productivity/Idea Board/prototypes/`
+- `ideaboard.html` — faithful copy of the live monolith + striped **PROTOTYPE** banner,
+  the sign-in gate overlay (`#auth-gate` + `.auth-*` styles), MSAL CDN script, a
+  host-conditional **Sign out** button, points at `app-proto.js`.
+- `app-proto.js` — copy of `app.js` (v2.4.6) with THREE changes: (1) localStorage keys
+  namespaced `ibproto_*` (isolated from live `ib_*` data); (2) gate-controlled boot via
+  `IB_startApp()` (guarded run-once); (3) token-seeded identity in `loadUser()`.
+  Version constant tagged **`2.5.0-proto`**.
+- `auth.js` — the MSAL gate: init → `handleRedirectPromise` → sign-in / authorize / boot,
+  with clean **Sign in**, **Access denied**, and **Sign-in problem** screens. Authorization
+  logic: empty lists = any tenant user; else match Entra group-id (`groups` claim) OR
+  user UPN/email (case-insensitive).
+- `auth-config.js` — the single edit point. Now populated:
+  - `clientId: 5dfd62e6-5070-401e-b91c-e433387c07ae`
+  - `tenantId: a7f35688-9c00-4d5e-ba41-29f146377ab0`
+  - `redirectUri` = the BT GitLab URL above
+  - `allowedUsers: ['isaac.2.gera@bt.com']` (prototype verification — single user)
+  - `gatedHosts: ['pages.gitlab.prod.ec.devops.nat.bt.com']` (localhost left out)
+- `manifest.json` — proto-named PWA manifest.
+- `sw.js` — proto SW; cache namespaced `ideaboard-proto-shell-v2.5.0-proto`; precaches
+  `app-proto.js` + auth files; MSAL CDN + Entra login endpoints bypassed like Firebase.
+- Icons `icon-192/512/512-maskable.png` copied in from the parent folder.
+
+### Verification done here
+- **Static diagnostics clean** on all four source files (no syntax/lint issues).
+- Prototype folder confirmed to contain all 9 files.
+- **Not** run in a browser here — a real Microsoft sign-in can't be completed on this
+  machine (known Windows shell quirk + no interactive browser). Live sign-in test is
+  Isaac's to run on the BT URL.
+
+### How to test (handed to Isaac)
+- **Level 1 — Live Server (local):** gate stays OFF (localhost ungated). Confirms the app
+  works in the sandbox — expect PROTOTYPE banner, the name prompt (not sign-in), working
+  board, and `ibproto_*` keys in DevTools (proves data isolation). No Sign out button.
+- **Level 2 — BT GitLab URL (the real test):** deploy the `prototypes/` folder so it serves
+  at the registered redirect URI, open in incognito. Expect: banner → "Sign in with
+  Microsoft" → sign in as `isaac.2.gera@bt.com` → board loads with real name + Sign out.
+  Any other BT account → "Access denied" screen. Watch for `AADSTS…` errors (redirect-URI /
+  platform mismatch) and console messages if sign-in loops.
+- Caveat flagged: the app-side allow-list matches the token UPN/username/email; if Isaac's
+  real sign-in UPN differs from `isaac.2.gera@bt.com`, the deny path may trigger for him —
+  report the exact UPN shown and the list gets adjusted.
+
+### Status / follow-ups
+- **Prototype only — live app untouched.** No version bump on the live app (stays v2.4.6);
+  the proto carries `2.5.0-proto`.
+- After Isaac verifies sign-in on the BT URL: port the finalized auth into the live
+  `ideaboard.html` + `app.js` in one pass, then do release chores (version bump, changelog,
+  PWA cache bump, docs, Ideas backlog sync). v3-modular port remains separate (TASK-02).
+- **Future phase (flagged, not scoped):** server-enforced lockdown of the Firebase DB so the
+  gate is a real boundary on the data, not just the UI.
+- Ideas.md left unchanged (app already `Built`; this is prototype work in progress on a
+  shipped app, not a status change — per Isaac).
+- Carried-forward items from Session 8 still open (manifest screenshots, Option A name-keyed
+  identity, TASK-02 v3 port).
+
+
+### Session 9 — Addendum (same session, post-test)
+**Level 2 Entra sign-in test: PASSED. MSAL CDN fix. Option B swap + restore.**
+
+#### Level 2 test result — PASSED
+- Deployed the prototype to the live BT GitLab Pages URL via **Option B**
+  (temporary CI swap: `cp prototypes/*.html prototypes/*.js ...`).
+- First attempt: gate engaged correctly but showed **"Sign-in problem: The
+  sign-in library could not be loaded."** The fail-closed behaviour worked
+  (board not exposed), but the MSAL library from `alcdn.msauth.net` was blocked
+  by the corporate proxy (Zscaler SSL interception — the same issue that
+  blocks pip).
+- **Fix:** bundled MSAL locally. Isaac downloaded `msal-browser.min.js`
+  (v2.35.0, ~370 KB) via his browser (which handles the proxy), saved into
+  `prototypes/`. HTML changed from CDN `<script>` to local file. SW precache
+  updated. The `*.js` CI glob publishes it automatically.
+- Second attempt after re-deploy: **full pass.** PROTOTYPE banner → "Sign in
+  with Microsoft" → BT/Microsoft login → redirect back → board loaded with
+  verified identity **"Isaac Gera (QVB C)"** from the token, Sign out button
+  present. App-side allow-list (`isaac.2.gera@bt.com`) matched, authorization
+  passed.
+
+#### Colleague added to allow-list
+- Added `srinivas.ballem@bt.com` to `allowedUsers` in `auth-config.js` so
+  Srinivas Ballem can test the sign-in gate too.
+
+#### Live app restored
+- Reverted `.gitlab-ci.yml` back to `cp *.html *.js *.json *.png public/`
+  (live app at root). Pipeline re-deployed. Confirmed live Idea Board back at
+  the BT URL: v2.4.6 badge, no gate, no PROTOTYPE banner, full board working,
+  Firebase presence showing 2 online.
+
+#### Key learnings (carry forward)
+- **MSAL CDN (`alcdn.msauth.net`) is blocked by Zscaler** on the BT network.
+  Any production deployment of the auth gate must bundle MSAL locally, not load
+  from CDN. The `msal-browser.min.js` file in `prototypes/` is the proven copy.
+- **`login.microsoftonline.com` IS reachable** — the sign-in redirect works fine.
+  Only the library CDN is blocked, not the auth endpoint itself.
+- **Option B (temporary swap) works** but is disruptive — the live app goes
+  offline for the team during the test. For future prototype testing, Option A
+  (separate project + second redirect URI) or Option C (localhost redirect URI)
+  is preferred if admin support is available.
+- The app registration's redirect URI (`pages.gitlab.prod.ec.devops.nat.bt.com/
+  ideaboard-c706fb/ideaboard.html`) maps to the `robt/app02752/IdeaBoard` team
+  project's Pages — confirmed via Deploy → Pages.
+
+#### Prototype files remain in `prototypes/` (12 files)
+`ideaboard.html`, `app-proto.js`, `auth.js`, `auth-config.js`,
+`msal-browser.min.js`, `manifest.json`, `sw.js`, `userguide.html`,
+`icon-192.png`, `icon-512.png`, `icon-512-maskable.png`,
+`SWAP-INSTRUCTIONS.md`.
+
+#### Next steps (carried forward from Session 9 main + this addendum)
+- **Port auth gate to live app** — when ready, fold the Entra gate into the
+  real `ideaboard.html` + `app.js`. Release chores: version bump (v2.5.0),
+  changelog, PWA cache bump, docs. Remember to bundle MSAL locally (not CDN).
+- **Decide the real authorized-subset mechanism** — Entra-side assignment
+  (admin-managed group) vs app-side allow-list vs both. Recommendation: Entra
+  "Assignment required" as the real boundary, app-side list as UX backup only.
+- **Firebase DB lockdown** — future phase; the gate currently protects the UI
+  only, not the raw database.
+- Carried-forward: manifest screenshots, Option A name-keyed identity,
+  TASK-02 v3 port.
+
+
+## Session 10 — Sep 15, 2026
+**RBAC fixes in the prototype: sticky promoted-admin roles + no duplicate users (Quick Spec, PROTOTYPE only)**
+
+### Goal
+Two RBAC bugs observed on the board, fixed in the prototype (`prototypes/app-proto.js`)
+only — to be ported to live alongside the Entra auth gate in one deliberate pass later.
+Live app (`app.js`, root `ideaboard.html`) untouched; no version bump on the live app.
+
+### Decisions locked (agreed up front)
+- **DB is the source of truth for roles**, not code. The hardcoded `ADMIN_NAMES` is
+  reduced to a *first-admin bootstrap seed* (mints the first admin only when a user has
+  no stored record yet); once a role is stored, the DB wins. This is the safe way to
+  "remove the hardcoded part" without a no-admin lockout.
+- **Stable, deterministic user ids** to stop duplicate records at the source
+  (root cause of the Session 6 dedupe workaround).
+- **Firebase stays** (explicitly, for now). Isaac raised the external-dependency concern
+  but decided to keep Firebase — live multi-user sync is needed and Firebase isn't blocked
+  on the BT network. See parked note below.
+
+### What was changed (all in `prototypes/app-proto.js`)
+**Fix 1 — promoted admin rights now persist; hardcoded dependency removed**
+- `isAdmin()` reads the stored role from `state.users[currentUser.id]` as the source of
+  truth; falls back to the bootstrap seed only when there's no record yet.
+- `registerUser()` now **reads the existing record before writing** and preserves the
+  stored role, instead of recomputing from the name list and `.set()`-clobbering it.
+  *This was the actual bug:* the promoted user's own client silently downgraded itself
+  back to `contributor` on every reconnect.
+- `ADMIN_NAMES` demoted to a bootstrap seed; added `BOOTSTRAP_ADMIN_UPNS` so the first
+  admin can be seeded by verified Entra UPN on the gated host (lets us drop the name seed
+  later with no lockout risk). New helper `isBootstrapAdmin()`.
+- **Last-admin guard:** `demoteUser()` (and the Manage Users UI) refuse to demote the
+  final admin — button becomes a "(last admin)" note. New helpers `adminNameCount()`,
+  `groupRoleForId()`.
+
+**Fix 2 — no duplicate user records**
+- Deterministic ids: `entra_<oid>` on the gated host, `local_<name-slug>` on the local
+  prompt path. Re-entering the same name reuses the same record. New helpers
+  `slugifyName()`, `localIdForName()`; `promptUser()` and `changeUser()` updated.
+- `getDedupedUsers()` kept as a safety net for legacy duplicates; the `(N×)` merged hint
+  removed from Manage Users since new activity is clean.
+- Manage Users intro text + row rendering updated (self "(you)" marker, admin-count-aware
+  demote button); no longer treats the seed name as an unmodifiable "hardcoded" row.
+
+### Verification
+- Static diagnostics clean on `app-proto.js`.
+- **Not** browser-tested here (known Windows shell quirk — no browser / no real Microsoft
+  sign-in on this machine). Test script handed to Isaac (local Live Server path + gated
+  BT-URL path with a promoted colleague). Testing in progress.
+
+### Observation during testing (follow-up, not a bug)
+- With a **contributor** identity ("Test One"), the **Switch User** button is hidden —
+  by design, it's admin-only (`render()` gates it on `isAdmin()`). Workarounds for local
+  testing: sign in as the seed name "Isaac Gera", or clear the `ibproto_user` localStorage
+  key between name changes.
+- **Follow-up to consider at the live port:** the whole Switch-User / name-prompt mechanism
+  is a pre-auth leftover. On the live gated app, identity comes from the Microsoft sign-in
+  (no name switching), so the button is only a local-testing / admin convenience now.
+  Decide at port time whether to keep, hide, or remove it under the auth gate.
+
+### Parked (own task, not now)
+- **Rethink the Firebase external dependency.** Live multi-user sync is required, so a pure
+  localStorage or git-as-datastore approach won't fit; a Supabase-style backend would only
+  swap one external dependency for another. Only a self-hosted realtime option truly
+  removes the external factor — a bigger project. Revisit in Plan mode if it resurfaces.
+
+### Status / carried-forward
+- Prototype only — live app untouched. Port these RBAC fixes **with** the Entra auth gate
+  to live in one pass (then release chores: version bump v2.5.0, changelog, PWA cache bump,
+  docs, Ideas backlog sync). Remember to bundle MSAL locally (not CDN) on the live port.
+- Still open from earlier sessions: manifest screenshots; TASK-02 v3-modular port.
+- `Ideas.md` unchanged (app already `Built`; this is prototype work on a shipped app,
+  not a status change).
+
+
+### Session 10 — Addendum (same session): ported RBAC fixes to LIVE (v2.4.7) + Add User in prototype
+
+#### RBAC fixes ported to the live app (v2.4.6 -> v2.4.7)
+- After local verification of the prototype (sticky promoted-admin roles + no
+  duplicate users, both confirmed on Live Server, incl. a promote chain
+  seed -> Test One -> another user), the two fixes were ported into the **live**
+  files. Entra auth gate deliberately NOT ported yet (waits for the gated BT-URL test).
+- Files changed:
+  - `app.js`: DB-as-source-of-truth roles (`isAdmin` reads stored role;
+    `isBootstrapAdmin()` helper), `registerUser()` reads-then-preserves the stored
+    role (the actual promotion bug), `ADMIN_NAMES` demoted to a bootstrap seed +
+    empty `BOOTSTRAP_ADMIN_UPNS` placeholder for the later auth port, deterministic
+    `local_<slug>` ids (`slugifyName`/`localIdForName`) in `promptUser`/`changeUser`,
+    last-admin demote guard (`adminNameCount`/`groupRoleForId`), Manage Users cleanup
+    (no `(N×)` hint, self "(you)" marker, seed name now manageable). `APP_VERSION` ->
+    `2.4.7` + changelog entry.
+  - `sw.js`: cache `v2.4.6` -> `v2.4.7`, precache `app.js?v=2.4.7`.
+  - `ideaboard.html`: script tag `app.js?v=2.4.7`.
+- Diagnostics clean. **Verified locally on Live Server** (badge shows v2.4.7, admin
+  controls present, users list clean, no console errors). NOTE: local Live Server hits
+  the REAL shared Firebase DB, so the definitive "promotion sticks across reconnect"
+  test is still the multi-machine gated one.
+- **NOT committed / NOT pushed** — all three deployed sites still on v2.4.6. `git pushall`
+  is Isaac's to run when ready.
+- Migration note: existing live users have random ids; after this change, re-entering a
+  name creates a new `local_<slug>` record and the old random-id record lingers until an
+  admin deletes it (dedupe collapses them in the display meanwhile). Not data loss — a
+  one-off Manage Users cleanup tidies it.
+
+#### Add User (Manage Users & Roles) — built in PROTOTYPE only
+- Requested by Isaac as an extra way to grant access / pre-assign roles and for testing.
+- Added `addUser()` (admin-only) to `prototypes/app-proto.js` + an "Add User" section in
+  the Manage Users modal (name field + Contributor/Admin dropdown + Add). Creates the
+  record under the deterministic `local_<slug>` id so the role links up when that person
+  enters the exact name locally; if the name already exists it updates the role instead of
+  duplicating; blank names rejected. Modal note explains it's mainly for local/testing +
+  pre-assigning, since on the gated board real access is governed by sign-in + allow-list
+  (a real user's id is `entra_<oid>`, unpredictable from a name).
+- `IB.addUser` exposed. Diagnostics clean. **Verified on Live Server (prototype).**
+- Add User is prototype-only for now — decision pending whether to port it to live on its
+  own or bundle it with the Entra auth gate port (Isaac leaning: bundle with auth port).
+
+#### Outstanding decisions / next steps
+- Ship v2.4.7 live fixes (Isaac to `git pushall` to origin/team/github).
+- Port Add User + Entra auth gate to live together after the gated BT-URL test passes
+  (bundle MSAL locally, not CDN; release chores: version bump to v2.5.0, changelog, PWA
+  cache bump, docs, Ideas backlog sync).
+- Ideas.md unchanged (app already `Built`; still prototype/iteration work on a shipped app).
+
+
+### Session 10 — Addendum 2 (same session): self-delete guard + Add User ported to LIVE (v2.4.8)
+
+#### Self-delete guard (bug found during testing)
+- Isaac observed: an admin could delete their OWN account, which stripped their role
+  and then every further action complained "Admin required" (a promoted admin lost admin
+  entirely; the bootstrap seed limped on via isBootstrapAdmin but had wiped its own record).
+- Fix (built + verified in prototype first): `isSelfUser()` helper; `deleteUser()` blocks
+  self-deletion with a toast; the Delete button is hidden on the admin's own row in Manage
+  Users. Edit still allowed on self.
+- Edge case confirmed by Isaac: delete all OTHER admins, then try to self-demote -> blocked
+  by the existing last-admin guard ("Cannot demote the last admin"). The invariant holds:
+  you cannot lock the board out of admin via self-delete, last-admin demote, or
+  delete-others-then-self-demote.
+
+#### Add User + self-delete guard ported to live (v2.4.7 -> v2.4.8)
+- Scope agreed: port **Add User** + **self-delete guard** now; **HOLD the Entra auth gate**
+  for a future v2.5.0 (after the gated BT-URL test). Version reserved: v2.5.0 = Entra release.
+- Files changed:
+  - `app.js`: added `addUser()` + `IB.addUser` + the Add User section in Manage Users
+    (name + Contributor/Admin dropdown + note); `isSelfUser()` + self-delete block in
+    `deleteUser()` + Delete hidden on own row. `APP_VERSION` -> `2.4.8` + changelog.
+  - `sw.js`: cache `v2.4.7` -> `v2.4.8`, precache `app.js?v=2.4.8`.
+  - `ideaboard.html`: script tag `app.js?v=2.4.8`.
+- Diagnostics clean. **Verified on Live Server** (badge v2.4.8, Add User works incl.
+  dedupe-on-existing-name + blank-name reject, own-row Delete hidden, no console errors).
+- Reminder: local Live Server hits the REAL shared Firebase DB — test with throwaway names.
+
+#### Status
+- **NOT committed / NOT pushed yet.** Live sites still on v2.4.6 until Isaac runs `git pushall`
+  (origin, team, github) to redeploy all three Pages sites. v2.4.7 and v2.4.8 will ship together
+  in that one push.
+- Prototype now also carries Add User + self-delete guard + the Entra auth gate; the gate is the
+  only remaining prototype-only piece, to be ported as v2.5.0 after the multi-machine gated test.
+- Ideas.md unchanged (app already `Built`).

@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Idea Board</title>
+<title>Idea Board [PROTOTYPE — Entra sign-in]</title>
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#6366f1">
-<meta name="description" content="Team innovation tracker — capture, discuss, vote on and prioritise ideas.">
+<meta name="description" content="Team innovation tracker — capture, discuss, vote on and prioritise ideas. [Prototype with Entra ID sign-in gate]">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Idea Board">
+<meta name="apple-mobile-web-app-title" content="Idea Board (proto)">
 <style>
 :root, [data-theme="light"] {
   --primary: #4f46e5; --primary-light: #818cf8; --accent: #f59e0b;
@@ -110,9 +110,6 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .idea-card .card-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .68rem; color: var(--text-light); }
 .idea-card .card-category { background: var(--surface-alt); padding: .1rem .4rem; border-radius: 4px; font-weight: 500; }
 .idea-card .card-priority { padding: .1rem .4rem; border-radius: 4px; font-weight: 600; color: #fff; font-size: .65rem; }
-/* Badge backgrounds darkened to the 600/700 shades so white text meets WCAG AA
-   (>=4.5:1) at this small font size. The --priority-* tokens are unchanged for
-   use elsewhere (borders/indicators). */
 .priority-high { background: #dc2626; }
 .priority-medium { background: #92400e; }
 .priority-low { background: #4b5563; }
@@ -141,7 +138,6 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .list-table tr:hover { background: var(--surface-alt); }
 .list-table tr { cursor: pointer; transition: background .15s; }
 .status-badge { padding: .15rem .5rem; border-radius: 10px; font-size: .7rem; font-weight: 600; color: #fff; white-space: nowrap; }
-/* Darkened to 600/700 shades so white badge text meets WCAG AA (>=4.5:1). */
 .status-new { background: #2563eb; }
 .status-in-progress { background: #92400e; }
 .status-review { background: #7c3aed; }
@@ -265,13 +261,39 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
 .tour-step-indicator { font-size: .7rem; color: var(--text-light); }
 .tour-nav { display: flex; gap: .3rem; }
 
+/* ============================================================
+   PROTOTYPE-ONLY STYLES: banner + auth gate
+   ============================================================ */
+.proto-banner { position: sticky; top: 0; z-index: 4000; background: repeating-linear-gradient(45deg, #f59e0b, #f59e0b 12px, #d97706 12px, #d97706 24px); color: #1e293b; font-size: .72rem; font-weight: 700; text-align: center; padding: .28rem .6rem; letter-spacing: .3px; text-shadow: 0 1px 0 rgba(255,255,255,.25); }
+
+.auth-gate { display: none; position: fixed; inset: 0; z-index: 6000; background: var(--bg); align-items: center; justify-content: center; padding: 1.5rem; }
+.auth-gate.show { display: flex; }
+.auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.18); padding: 2.4rem 2rem; max-width: 400px; width: 100%; text-align: center; }
+.auth-logo { display: flex; justify-content: center; margin-bottom: 1rem; }
+.auth-logo img { border-radius: 14px; box-shadow: 0 4px 14px rgba(99,102,241,.28); }
+.auth-card h1 { font-size: 1.4rem; color: var(--primary); margin-bottom: .5rem; }
+.auth-sub { font-size: .9rem; color: var(--text); line-height: 1.55; margin-bottom: 1.3rem; }
+.auth-note { font-size: .74rem; color: var(--text-light); margin-top: 1rem; line-height: 1.5; }
+.auth-btn { width: 100%; padding: .7rem 1rem; border: none; border-radius: 8px; background: var(--primary); color: #fff; font-size: .92rem; font-weight: 600; cursor: pointer; transition: background .18s, transform .18s; }
+.auth-btn:hover { background: var(--primary-light); transform: translateY(-1px); }
+.auth-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.auth-btn-secondary { background: var(--surface-alt); color: var(--text); border: 1px solid var(--border); }
+.auth-btn-secondary:hover { background: var(--border); }
+
 /* Responsive */
 @media (max-width: 1024px) { .kanban { grid-template-columns: repeat(2, 1fr); } .dashboard { flex-wrap: wrap; } }
 @media (max-width: 640px) { .kanban { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } header { flex-direction: column; align-items: flex-start; } .toolbar { flex-direction: column; align-items: stretch; } .dashboard .stat-card { min-width: 80px; } }
-@media print { header, .toolbar, .dashboard { display: none !important; } .kanban { grid-template-columns: repeat(2, 1fr); } .idea-card { break-inside: avoid; } }
+@media print { header, .toolbar, .dashboard, .proto-banner { display: none !important; } .kanban { grid-template-columns: repeat(2, 1fr); } .idea-card { break-inside: avoid; } }
 </style>
 </head>
 <body>
+<div class="proto-banner">PROTOTYPE — Entra ID sign-in gate · isolated sandbox data (ibproto_) · not the live app</div>
+
+<!-- Entra ID sign-in gate. Hidden by default; auth.js shows it on gated hosts. -->
+<div class="auth-gate" id="auth-gate" role="dialog" aria-modal="true" aria-label="Sign in to Idea Board">
+  <div class="auth-card"><!-- populated by auth.js --></div>
+</div>
+
 <div class="app">
   <header>
     <div class="header-left">
@@ -293,6 +315,8 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
       <span class="user-name" id="user-display"></span>
       <div class="user-avatar" id="user-avatar" aria-hidden="true"></div>
       <button class="btn btn-sm" id="btn-switch-user" onclick="IB.changeUser()" title="Switch to a different user">Switch</button>
+      <!-- Sign out: only meaningful when auth is engaged; shown via JS on gated hosts -->
+      <button class="btn btn-sm" id="btn-sign-out" onclick="IB.signOut()" style="display:none" title="Sign out of Idea Board">Sign out</button>
     </div>
   </header>
 
@@ -342,15 +366,39 @@ header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400
   </div>
 </div>
 
+<!-- Firebase (unchanged from live app) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="app.js?v=2.4.8"></script>
+
+<!-- MSAL.js browser library (Entra ID sign-in).
+     Loaded LOCALLY (not from CDN) because the corporate proxy/SSL interception
+     blocks alcdn.msauth.net. Download msal-browser.min.js into this folder —
+     see SWAP-INSTRUCTIONS.md. -->
+<script src="msal-browser.min.js"></script>
+
+<!-- Auth config (Client ID / Tenant ID / redirect URI / allow-lists) then the gate -->
+<script src="auth-config.js"></script>
+<script src="auth.js"></script>
+
+<!-- The app. Does NOT self-boot; the auth gate calls IB_startApp() -->
+<script src="app-proto.js"></script>
+
 <script>
+  // Show the Sign out button only when auth is actually engaged (gated host).
+  (function () {
+    try {
+      if (window.IB_AUTH && window.IB_AUTH.isGated && window.IB_AUTH.isGated()) {
+        var btn = document.getElementById('btn-sign-out');
+        if (btn) btn.style.display = 'inline-flex';
+      }
+    } catch (e) { /* no-op */ }
+  })();
+
   // Register the service worker for offline app-shell support.
   // Only registers over http(s) — skips file:// where SWs are unsupported.
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch((err) => {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
         console.warn('Service worker registration failed:', err);
       });
     });

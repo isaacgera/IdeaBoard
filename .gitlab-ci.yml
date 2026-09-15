@@ -6,7 +6,7 @@ pages:
     - mobius_shared_runner_cloud
   script:
     - mkdir public
-    - cp *.html *.js *.json public/
+    - cp *.html *.js *.json *.png public/
   artifacts:
     paths:
       - public
