@@ -738,3 +738,163 @@ users can open it, via Azure AD / Microsoft Entra ID. Built as a **prototype fir
   only, not the raw database.
 - Carried-forward: manifest screenshots, Option A name-keyed identity,
   TASK-02 v3 port.
+
+
+## Session 10 — Sep 15, 2026
+**RBAC fixes in the prototype: sticky promoted-admin roles + no duplicate users (Quick Spec, PROTOTYPE only)**
+
+### Goal
+Two RBAC bugs observed on the board, fixed in the prototype (`prototypes/app-proto.js`)
+only — to be ported to live alongside the Entra auth gate in one deliberate pass later.
+Live app (`app.js`, root `ideaboard.html`) untouched; no version bump on the live app.
+
+### Decisions locked (agreed up front)
+- **DB is the source of truth for roles**, not code. The hardcoded `ADMIN_NAMES` is
+  reduced to a *first-admin bootstrap seed* (mints the first admin only when a user has
+  no stored record yet); once a role is stored, the DB wins. This is the safe way to
+  "remove the hardcoded part" without a no-admin lockout.
+- **Stable, deterministic user ids** to stop duplicate records at the source
+  (root cause of the Session 6 dedupe workaround).
+- **Firebase stays** (explicitly, for now). Isaac raised the external-dependency concern
+  but decided to keep Firebase — live multi-user sync is needed and Firebase isn't blocked
+  on the BT network. See parked note below.
+
+### What was changed (all in `prototypes/app-proto.js`)
+**Fix 1 — promoted admin rights now persist; hardcoded dependency removed**
+- `isAdmin()` reads the stored role from `state.users[currentUser.id]` as the source of
+  truth; falls back to the bootstrap seed only when there's no record yet.
+- `registerUser()` now **reads the existing record before writing** and preserves the
+  stored role, instead of recomputing from the name list and `.set()`-clobbering it.
+  *This was the actual bug:* the promoted user's own client silently downgraded itself
+  back to `contributor` on every reconnect.
+- `ADMIN_NAMES` demoted to a bootstrap seed; added `BOOTSTRAP_ADMIN_UPNS` so the first
+  admin can be seeded by verified Entra UPN on the gated host (lets us drop the name seed
+  later with no lockout risk). New helper `isBootstrapAdmin()`.
+- **Last-admin guard:** `demoteUser()` (and the Manage Users UI) refuse to demote the
+  final admin — button becomes a "(last admin)" note. New helpers `adminNameCount()`,
+  `groupRoleForId()`.
+
+**Fix 2 — no duplicate user records**
+- Deterministic ids: `entra_<oid>` on the gated host, `local_<name-slug>` on the local
+  prompt path. Re-entering the same name reuses the same record. New helpers
+  `slugifyName()`, `localIdForName()`; `promptUser()` and `changeUser()` updated.
+- `getDedupedUsers()` kept as a safety net for legacy duplicates; the `(N×)` merged hint
+  removed from Manage Users since new activity is clean.
+- Manage Users intro text + row rendering updated (self "(you)" marker, admin-count-aware
+  demote button); no longer treats the seed name as an unmodifiable "hardcoded" row.
+
+### Verification
+- Static diagnostics clean on `app-proto.js`.
+- **Not** browser-tested here (known Windows shell quirk — no browser / no real Microsoft
+  sign-in on this machine). Test script handed to Isaac (local Live Server path + gated
+  BT-URL path with a promoted colleague). Testing in progress.
+
+### Observation during testing (follow-up, not a bug)
+- With a **contributor** identity ("Test One"), the **Switch User** button is hidden —
+  by design, it's admin-only (`render()` gates it on `isAdmin()`). Workarounds for local
+  testing: sign in as the seed name "Isaac Gera", or clear the `ibproto_user` localStorage
+  key between name changes.
+- **Follow-up to consider at the live port:** the whole Switch-User / name-prompt mechanism
+  is a pre-auth leftover. On the live gated app, identity comes from the Microsoft sign-in
+  (no name switching), so the button is only a local-testing / admin convenience now.
+  Decide at port time whether to keep, hide, or remove it under the auth gate.
+
+### Parked (own task, not now)
+- **Rethink the Firebase external dependency.** Live multi-user sync is required, so a pure
+  localStorage or git-as-datastore approach won't fit; a Supabase-style backend would only
+  swap one external dependency for another. Only a self-hosted realtime option truly
+  removes the external factor — a bigger project. Revisit in Plan mode if it resurfaces.
+
+### Status / carried-forward
+- Prototype only — live app untouched. Port these RBAC fixes **with** the Entra auth gate
+  to live in one pass (then release chores: version bump v2.5.0, changelog, PWA cache bump,
+  docs, Ideas backlog sync). Remember to bundle MSAL locally (not CDN) on the live port.
+- Still open from earlier sessions: manifest screenshots; TASK-02 v3-modular port.
+- `Ideas.md` unchanged (app already `Built`; this is prototype work on a shipped app,
+  not a status change).
+
+
+### Session 10 — Addendum (same session): ported RBAC fixes to LIVE (v2.4.7) + Add User in prototype
+
+#### RBAC fixes ported to the live app (v2.4.6 -> v2.4.7)
+- After local verification of the prototype (sticky promoted-admin roles + no
+  duplicate users, both confirmed on Live Server, incl. a promote chain
+  seed -> Test One -> another user), the two fixes were ported into the **live**
+  files. Entra auth gate deliberately NOT ported yet (waits for the gated BT-URL test).
+- Files changed:
+  - `app.js`: DB-as-source-of-truth roles (`isAdmin` reads stored role;
+    `isBootstrapAdmin()` helper), `registerUser()` reads-then-preserves the stored
+    role (the actual promotion bug), `ADMIN_NAMES` demoted to a bootstrap seed +
+    empty `BOOTSTRAP_ADMIN_UPNS` placeholder for the later auth port, deterministic
+    `local_<slug>` ids (`slugifyName`/`localIdForName`) in `promptUser`/`changeUser`,
+    last-admin demote guard (`adminNameCount`/`groupRoleForId`), Manage Users cleanup
+    (no `(N×)` hint, self "(you)" marker, seed name now manageable). `APP_VERSION` ->
+    `2.4.7` + changelog entry.
+  - `sw.js`: cache `v2.4.6` -> `v2.4.7`, precache `app.js?v=2.4.7`.
+  - `ideaboard.html`: script tag `app.js?v=2.4.7`.
+- Diagnostics clean. **Verified locally on Live Server** (badge shows v2.4.7, admin
+  controls present, users list clean, no console errors). NOTE: local Live Server hits
+  the REAL shared Firebase DB, so the definitive "promotion sticks across reconnect"
+  test is still the multi-machine gated one.
+- **NOT committed / NOT pushed** — all three deployed sites still on v2.4.6. `git pushall`
+  is Isaac's to run when ready.
+- Migration note: existing live users have random ids; after this change, re-entering a
+  name creates a new `local_<slug>` record and the old random-id record lingers until an
+  admin deletes it (dedupe collapses them in the display meanwhile). Not data loss — a
+  one-off Manage Users cleanup tidies it.
+
+#### Add User (Manage Users & Roles) — built in PROTOTYPE only
+- Requested by Isaac as an extra way to grant access / pre-assign roles and for testing.
+- Added `addUser()` (admin-only) to `prototypes/app-proto.js` + an "Add User" section in
+  the Manage Users modal (name field + Contributor/Admin dropdown + Add). Creates the
+  record under the deterministic `local_<slug>` id so the role links up when that person
+  enters the exact name locally; if the name already exists it updates the role instead of
+  duplicating; blank names rejected. Modal note explains it's mainly for local/testing +
+  pre-assigning, since on the gated board real access is governed by sign-in + allow-list
+  (a real user's id is `entra_<oid>`, unpredictable from a name).
+- `IB.addUser` exposed. Diagnostics clean. **Verified on Live Server (prototype).**
+- Add User is prototype-only for now — decision pending whether to port it to live on its
+  own or bundle it with the Entra auth gate port (Isaac leaning: bundle with auth port).
+
+#### Outstanding decisions / next steps
+- Ship v2.4.7 live fixes (Isaac to `git pushall` to origin/team/github).
+- Port Add User + Entra auth gate to live together after the gated BT-URL test passes
+  (bundle MSAL locally, not CDN; release chores: version bump to v2.5.0, changelog, PWA
+  cache bump, docs, Ideas backlog sync).
+- Ideas.md unchanged (app already `Built`; still prototype/iteration work on a shipped app).
+
+
+### Session 10 — Addendum 2 (same session): self-delete guard + Add User ported to LIVE (v2.4.8)
+
+#### Self-delete guard (bug found during testing)
+- Isaac observed: an admin could delete their OWN account, which stripped their role
+  and then every further action complained "Admin required" (a promoted admin lost admin
+  entirely; the bootstrap seed limped on via isBootstrapAdmin but had wiped its own record).
+- Fix (built + verified in prototype first): `isSelfUser()` helper; `deleteUser()` blocks
+  self-deletion with a toast; the Delete button is hidden on the admin's own row in Manage
+  Users. Edit still allowed on self.
+- Edge case confirmed by Isaac: delete all OTHER admins, then try to self-demote -> blocked
+  by the existing last-admin guard ("Cannot demote the last admin"). The invariant holds:
+  you cannot lock the board out of admin via self-delete, last-admin demote, or
+  delete-others-then-self-demote.
+
+#### Add User + self-delete guard ported to live (v2.4.7 -> v2.4.8)
+- Scope agreed: port **Add User** + **self-delete guard** now; **HOLD the Entra auth gate**
+  for a future v2.5.0 (after the gated BT-URL test). Version reserved: v2.5.0 = Entra release.
+- Files changed:
+  - `app.js`: added `addUser()` + `IB.addUser` + the Add User section in Manage Users
+    (name + Contributor/Admin dropdown + note); `isSelfUser()` + self-delete block in
+    `deleteUser()` + Delete hidden on own row. `APP_VERSION` -> `2.4.8` + changelog.
+  - `sw.js`: cache `v2.4.7` -> `v2.4.8`, precache `app.js?v=2.4.8`.
+  - `ideaboard.html`: script tag `app.js?v=2.4.8`.
+- Diagnostics clean. **Verified on Live Server** (badge v2.4.8, Add User works incl.
+  dedupe-on-existing-name + blank-name reject, own-row Delete hidden, no console errors).
+- Reminder: local Live Server hits the REAL shared Firebase DB — test with throwaway names.
+
+#### Status
+- **NOT committed / NOT pushed yet.** Live sites still on v2.4.6 until Isaac runs `git pushall`
+  (origin, team, github) to redeploy all three Pages sites. v2.4.7 and v2.4.8 will ship together
+  in that one push.
+- Prototype now also carries Add User + self-delete guard + the Entra auth gate; the gate is the
+  only remaining prototype-only piece, to be ported as v2.5.0 after the multi-machine gated test.
+- Ideas.md unchanged (app already `Built`).

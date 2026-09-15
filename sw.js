@@ -6,15 +6,15 @@
  *
  * Bump CACHE_VERSION on every release so old caches are cleaned up on activate.
  */
-const CACHE_VERSION = 'v2.4.6';
+const CACHE_VERSION = 'v2.4.8';
 const CACHE_NAME = `ideaboard-shell-${CACHE_VERSION}`;
 
 // App-shell assets to precache. app.js is cached at the exact query the HTML
-// requests (?v=2.4) so the cached URL matches the fetch URL.
+// requests (?v=2.4.8) so the cached URL matches the fetch URL.
 const SHELL_ASSETS = [
   './',
   './ideaboard.html',
-  './app.js?v=2.4.6',
+  './app.js?v=2.4.8',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
