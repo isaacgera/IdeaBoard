@@ -10,7 +10,7 @@
   - Internal GitLab Pages: (deployed via `gitlab.prod.ec.devops.nat.bt.com`)
 - **Files:** `ideaboard.html` (UI/CSS), `app.js` (logic), `userguide.html` (documentation), `dummy-data.json` (sample data)
 - **Backend:** Firebase Realtime Database (real-time multi-user sync)
-- **Current Version:** v2.3
+- **Current Version:** v2.4.8
 
 ---
 
@@ -949,3 +949,115 @@ wrong branch (this is a cousin of the Session 3 runner-assignment trap).
 - Personal remote `master` branch deleted (redundant; `main` holds the full history,
   nothing relied on it). Local `master` remains the working branch.
 - Final end-to-end push test done to confirm the flow works with `master` gone.
+
+
+### Session 10 — Addendum 4 (same session): decision — do NOT port the Entra gate to live
+
+#### Decision
+The Entra ID (Azure AD) sign-in gate will **not** be ported to the live app. It stays in
+`prototypes/` as the proven reference implementation. Live app remains at **v2.4.8**; the
+reserved **v2.5.0** for the Entra release is shelved (not cancelled — available if ever needed).
+
+#### Why
+- **Purpose already met.** The goal of the Entra work was to learn how to configure and
+  integrate Entra ID for a static SPA — that succeeded and was verified end-to-end
+  (multi-machine sign-in on the real BT URL, local MSAL bundling to dodge the Zscaler CDN
+  block, app-side allow-list, fail-closed behaviour).
+- **Access is already solved better for this app.** The live board is served from the
+  team GitLab space, which is behind **SAML**, and access is further restricted to an
+  **authorized subset via a team-space group**. So the Entra gate would be a third
+  overlapping access layer — a second sign-in + ongoing maintenance for no access-control
+  gain.
+- The one unique benefit the gate would add beyond access — a **verified identity inside
+  the app** (real name/UPN + stable `entra_<oid>` id, which strengthens the RBAC work) —
+  isn't worth forcing a second sign-in on top of SAML. Parked as a "someday, maybe": if it
+  ever matters, first check whether GitLab passes any identity through to the static page
+  before reaching for MSAL again.
+
+#### State
+- Prototype (`prototypes/`) keeps the full, working Entra gate (auth.js, auth-config.js,
+  local msal-browser.min.js, gate overlay, host-conditional boot) as a reusable pattern for
+  future apps that genuinely need app-level sign-in.
+- Live app: no auth-gate code, boots normally; RBAC fixes + Add User + self-delete guard
+  (v2.4.8) are live and deployed on all three sites.
+- Ideas.md unchanged (app already `Built`).
+
+
+### Session 10 — Addendum 5 (same session): v3-modular migration plan captured
+
+Isaac flagged the v3-modular migration as a near-future session and asked for a plan.
+Captured the full phased plan in **SPEC-tasks.md TASK-02** (rewritten + upgraded from the
+old Session 6 note to Medium priority):
+- **Phase 0:** confirm the "why" (v3's benefit is maintainability, not features) in Plan mode.
+- **Phase 1:** feature-parity port — bring v3 up from its frozen ~v2.3 state to live v2.4.8
+  (PWA layer, a11y/Lighthouse 100, version badge, Manage Users dedupe, RBAC fixes,
+  Add User, self-delete guard), verifying function-by-function against the monolith.
+- **Phase 2:** verify over HTTP (ES modules can't run on file://; was the Session 4 blocker,
+  now unblocked via Live Server) — Lighthouse 100 + offline + Firebase + feature match.
+- **Phase 3:** promotion — swap served files; **update `.gitlab-ci.yml` to recurse `src/` +
+  `styles/`** (else 404 on GitLab Pages); keep monolith as fallback; release chores (v3.0.0).
+- **Phase 4:** data safety — same Firebase DB + `ib_*` keys, no data migration needed; back up first.
+
+Confirmed on disk this session: v3-modular structure intact (12 modules in `src/modules/`,
+8 stylesheets in `styles/`, HTML shell) but stale. Treat the migration as a **Spec**, not a
+Default tweak. Possible to fold TASK-01 (name-keyed identity) into it since the
+deterministic-id work already shipped to the monolith overlaps.
+
+
+### Session 10 — Addendum 6 (same session): v3 migration direction confirmed by Isaac
+
+Isaac confirmed the approach for TASK-02:
+- **v3-modular IS the way forward** — the app will keep evolving, so the maintainability
+  payoff is worth it. Phase 0 ("is it worth it?") is effectively decided: YES.
+- **Do the feature-parity port FIRST** — bring v3 into sync with live v2.4.8 (Phase 1),
+  keeping both in step.
+- **Test the synced v3 before promoting** — likely as a prototype / HTTP-served build
+  (Phase 2), since ES modules need HTTP not file://.
+- **Only then promote** v3 to become the main served version (Phase 3), with the CI
+  folder-copy fix + release chores.
+
+So the running order is locked: parity port -> test -> promote. Treat as a Spec when picked up.
+
+
+## Session 11 — Sep 17, 2026
+**Documentation version sync (userguide + session-log header)**
+
+### Goal
+Isaac spotted that the app was at v2.4.8 but the user guide (and possibly other docs)
+still showed an older version. Carried out a careful sweep for stale version references
+and brought the docs back in line. Default mode — docs only, no app code touched, no
+version bump.
+
+### What was checked (whole Idea Board folder)
+| File | State found | Action |
+|---|---|---|
+| `app.js` (`APP_VERSION`) | `2.4.8` | source of truth — correct |
+| `sw.js` (cache + `?v=` queries) | `v2.4.8` | correct |
+| `ideaboard.html` (badge is dynamic via `APP_VERSION`; `app.js?v=2.4.8`) | `2.4.8` | correct |
+| `SPEC-tasks.md` | references `v2.4.8` | correct |
+| `SPEC-requirements.md` | `v2.4.x` / "verified Lighthouse 100 at v2.4.6" | historical facts — left as-is |
+| `overview.html`, `README.md`, `manifest.json` | no version field | nothing to change |
+| **`userguide.html`** | **badge + footer said `v2.4.6`** | **stale — fixed** |
+| **`SESSION-LOG.md`** Project Info | **`Current Version: v2.3`** | **stale — fixed to v2.4.8** |
+
+### Changes made
+- **`userguide.html`**
+  - Header version badge `v2.4.6` -> `v2.4.8`.
+  - Footer `Idea Board v2.4.6 / v3.0-modular` -> `v2.4.8`.
+  - Documented the v2.4.8 **Add User** admin feature (pre-add a user by name + role) in the
+    User Management section, and added the sticky-admin / no-self-delete guard notes.
+  - Roles & Permissions table: "Manage users (promote/demote/rename/delete)" ->
+    "(add/promote/demote/rename/delete)".
+  - Left the v3-modular comparison table's "Original (v2.3)" as-is — it's a correct
+    historical statement (v3 was forked from v2.3-era code).
+- **`SESSION-LOG.md`** — Project Info `Current Version` field `v2.3` -> `v2.4.8`.
+
+### Verified
+- Grep confirms no `2.4.6` references remain in `userguide.html`.
+- Changes are docs-only; app code, manifest, and SW untouched — nothing to deploy beyond
+  the doc files themselves whenever the next `git pushall` runs.
+
+### Notes
+- Ideas.md unchanged (app already `Built (v2.4.8)`; this is a doc-sync, not a status change).
+- v3-modular userguide/docs not touched — v3 is still frozen at ~v2.3 pending the TASK-02
+  parity port; its docs will be synced as part of that work, not here.

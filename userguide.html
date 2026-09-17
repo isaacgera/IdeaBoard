@@ -45,7 +45,7 @@ th { background: #f8fafc; font-weight: 600; }
   <h1>
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
     Idea Board User Guide
-    <span class="version-badge">v2.4.6</span>
+    <span class="version-badge">v2.4.8</span>
   </h1>
   <p class="subtitle">Architecture Middleware Integration Team — Team Innovation Tracker</p>
 
@@ -232,7 +232,7 @@ th { background: #f8fafc; font-weight: 600; }
     <tr><td>Bulk actions on own ideas</td><td>Yes</td><td>Yes</td></tr>
     <tr><td>Manage categories</td><td>Yes</td><td>No</td></tr>
     <tr><td>Import / Export data</td><td>Yes</td><td>No</td></tr>
-    <tr><td>Manage users (promote/demote/rename/delete)</td><td>Yes</td><td>No</td></tr>
+    <tr><td>Manage users (add/promote/demote/rename/delete)</td><td>Yes</td><td>No</td></tr>
     <tr><td>View online users</td><td>Yes</td><td>No</td></tr>
     <tr><td>Switch user identity</td><td>Yes</td><td>No</td></tr>
   </table>
@@ -256,12 +256,13 @@ th { background: #f8fafc; font-weight: 600; }
 
   <h3>User Management (Manage Users & Roles)</h3>
   <ul>
+    <li><strong>Add User</strong> — admins can pre-add a team member by name and assign a role (Contributor or Admin) before that person has opened the app. When they later join using the same name, they inherit the role you set.</li>
     <li><strong>Promote</strong> — elevate a contributor to admin</li>
     <li><strong>Demote</strong> — reduce an admin back to contributor</li>
     <li><strong>Edit (Rename)</strong> — changes the user's name; all their ideas, comments, and history entries are remapped to the new name</li>
     <li><strong>Delete</strong> — removes the user; all their ideas are reassigned to you (admin)</li>
   </ul>
-  <div class="warning"><strong>Note:</strong> The hardcoded admin (Isaac Gera) cannot be demoted or deleted.</div>
+  <div class="warning"><strong>Note:</strong> The hardcoded admin (Isaac Gera) cannot be demoted or deleted. Promoted admins keep their admin rights across sessions, and you cannot delete your own account (the Delete button is hidden on your own row) — this guards against accidentally locking yourself out.</div>
 
   <h3>Online Users</h3>
   <p>The green badge in the header (e.g., "3 online") is visible to admin only. Click it to see a list of team members currently active on the board, with green status indicators.</p>
@@ -390,8 +391,9 @@ th { background: #f8fafc; font-weight: 600; }
 
   <hr style="margin:3rem 0 1rem;border:none;border-top:1px solid var(--border)">
   <p style="color:var(--text-light);font-size:.75rem;text-align:center">
-    Idea Board v2.4.6 / v3.0-modular — Architecture Middleware Integration Team — Updated September 2026<br>
-    Built with Kiro AI IDE
+    Idea Board v2.4.8 / v3.0-modular — Architecture Middleware Integration Team — Updated September 2026<br>
+    <strong>Powered by Forjé</strong><br>
+    &copy; 2026 Isaac A Gera. All rights reserved.
   </p>
 </div>
 </body>
