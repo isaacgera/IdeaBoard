@@ -1061,3 +1061,47 @@ version bump.
 - Ideas.md unchanged (app already `Built (v2.4.8)`; this is a doc-sync, not a status change).
 - v3-modular userguide/docs not touched — v3 is still frozen at ~v2.3 pending the TASK-02
   parity port; its docs will be synced as part of that work, not here.
+
+
+### Session 11 — Addendum (same session): "Powered by Forjé" branding + commit & push
+
+#### Branding credit added / replaced (docs + app)
+Isaac asked to replace "Built with Kiro AI IDE" with a two-line credit and apply it
+consistently across the app family:
+```
+Powered by Forjé
+© 2026 Isaac A Gera. All rights reserved.
+```
+- **`userguide.html`** — footer credit swapped to the new two-line credit (bold
+  "Powered by Forjé" + copyright).
+- **`overview.html`** — added a matching `<footer>` (it was a stub with no footer before);
+  styled to its warm/muted palette, indigo accent on the "Powered by Forjé" line.
+- **`ideaboard.html` (the live app)** — added a small, unobtrusive `<footer class="app-footer">`
+  at the bottom of `.app` (below the board). New CSS uses existing theme tokens
+  (`--text-light`, `--border`, `--primary`) so it renders correctly in **light + dark**, and
+  the footer is added to the print-hide rule alongside header/toolbar/dashboard.
+- **`prototypes/userguide.html`** — same credit swap (left proto version tag at v2.4.6, as it's
+  a separate in-progress artifact).
+- Left untouched deliberately: `msal-browser.min.js` (third-party Microsoft copyright) and git
+  hook samples — not app-authored branding.
+- Diagnostics clean on all four edited HTML files. Isaac eyeballed the rendered result and
+  approved. Display/branding only — **no version bump** (app stays v2.4.8).
+
+#### Committed + pushed
+- Commit `da7b1e2` — "Docs: sync userguide to v2.4.8, add Powered by Forje credit across app + docs".
+  Six files: `SESSION-LOG.md`, `SPEC-tasks.md` (the previously-uncommitted v3-migration plan from
+  Session 10 Addendum 5), `ideaboard.html`, `overview.html`, `prototypes/userguide.html`,
+  `userguide.html`.
+- `git pushall` was run (pushes `master:main` to origin/team/github). The terminal returned
+  garbled/empty output this session (the recurring Windows shell quirk), so **push success to all
+  three remotes was handed to Isaac to confirm** via:
+  `git ls-remote origin/team/github refs/heads/main` should all match local HEAD `da7b1e2`.
+  Any leg that didn't land → re-run `git pushall` (or push that leg individually) and its Pages
+  site redeploys.
+
+#### Wrap-up state
+- Idea Board session closed. Live app at **v2.4.8**; all docs + app now carry the "Powered by
+  Forjé" credit. No open code work from this session.
+- Carried-forward (unchanged, future sessions): TASK-02 v3-modular parity port (parity → test →
+  promote, treat as a Spec); optional manifest screenshots; Option A name-keyed identity.
+- Ideas.md unchanged (app already `Built (v2.4.8)`; branding/doc-sync, not a status change).
