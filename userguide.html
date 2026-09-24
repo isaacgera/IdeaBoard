@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Idea Board - User Guide</title>
 <style>
-:root { --primary: #6366f1; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --surface: #fff; --border: #e2e8f0; }
+:root { --primary: #5514b4; --text: #1e293b; --text-light: #64748b; --bg: #f8fafc; --surface: #fff; --border: #e2e8f0; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
 .guide { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
@@ -45,7 +45,7 @@ th { background: #f8fafc; font-weight: 600; }
   <h1>
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.4-1.2 4.5-3 5.7V17a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1v-2.3C6.2 13.5 5 11.4 5 9a7 7 0 0 1 7-7z"/></svg>
     Idea Board User Guide
-    <span class="version-badge">v2.4.8</span>
+    <span class="version-badge">v2.5.0</span>
   </h1>
   <p class="subtitle">Architecture Middleware Integration Team — Team Innovation Tracker</p>
 
@@ -178,26 +178,30 @@ th { background: #f8fafc; font-weight: 600; }
     <tr><td>In Review</td><td>Ideas under review</td></tr>
     <tr><td>Done</td><td>Completed ideas</td></tr>
     <tr><td>This Month</td><td>Ideas created in the current calendar month</td></tr>
-    <tr><td>Top Contributor</td><td>Person who submitted the most ideas</td></tr>
+    <tr><td>Contributors</td><td>Count of distinct people who have submitted at least one idea</td></tr>
   </table>
+  <p>When a toolbar filter is active (Category, Priority, Contributor, or Search), the dashboard counts update to reflect only the filtered ideas.</p>
 
   <h3>Interactive Filtering:</h3>
   <ul>
-    <li><strong>Hover</strong> over a stat card — non-matching items dim/hide instantly (preview)</li>
-    <li><strong>Click</strong> a stat card — locks the filter (stays active until you click elsewhere)</li>
-    <li><strong>Click outside</strong> the dashboard — clears the filter, shows all items</li>
-    <li><strong>Click "Total Ideas"</strong> — explicitly clears any active filter</li>
+    <li><strong>Hover</strong> (or <strong>Tab</strong> to focus with the keyboard) a stat card — matching items are previewed with a <strong>single</strong> highlight border; non-matching items dim (Board) or hide (List)</li>
+    <li><strong>Click</strong> (or press <strong>Enter/Space</strong> when focused) a stat card — <strong>locks</strong> the filter, shown with a <strong>double</strong> highlight border; it stays active until you clear it</li>
+    <li><strong>Click the same card again</strong> — unlocks and clears the filter</li>
+    <li><strong>Click "Total Ideas" or "Contributors"</strong> — shows all ideas</li>
+    <li><strong>Click outside</strong> the dashboard, or press <strong>Esc</strong> — clears the filter</li>
   </ul>
-  <p>In Board view, non-matching cards fade to near-invisible. In List view, non-matching rows are completely hidden (true filter).</p>
+  <p>The highlight border is drawn around the whole matching column (Board) or the list box (List), not each card. In Board view, non-matching cards fade to near-invisible; in List view, non-matching rows are completely hidden (true filter). Mouse and keyboard behave identically.</p>
 
   <h2 id="filtering">Search & Filtering</h2>
   <p>Use the toolbar controls to narrow down ideas:</p>
   <ul>
     <li><strong>Search box</strong> — live search across title, description, benefits, and submitter name</li>
-    <li><strong>Category dropdown</strong> — filter to a specific category</li>
+    <li><strong>Categories dropdown</strong> — filter to a specific category</li>
     <li><strong>Priority dropdown</strong> — filter by High, Medium, or Low</li>
+    <li><strong>Contributors dropdown</strong> — filter to ideas submitted by a specific person (the list is built from everyone who has added an idea)</li>
   </ul>
-  <p>All filters combine (e.g., search "automation" + category "Technology" + priority "High" shows only matching ideas). Clear all to see everything.</p>
+  <p>All filters combine (e.g., search "automation" + category "Technology" + priority "High" + a contributor shows only matching ideas), and the dashboard counts update to match.</p>
+  <div class="tip"><strong>Clear filters:</strong> When any filter is active, a <strong>Clear filters</strong> button appears in the toolbar showing how many are active, e.g. <code>&times; Clear filters (2)</code>. Click it — or press <strong>Esc</strong> — to reset the search, all dropdowns, and any locked dashboard filter in one go.</div>
 
   <h2 id="bulk-actions">Bulk Actions</h2>
   <p>In List view, each row has a checkbox on the left. Select one or more ideas to reveal the <strong>bulk action bar</strong> (purple bar above the table):</p>
@@ -319,6 +323,7 @@ th { background: #f8fafc; font-weight: 600; }
     <li>Use bulk actions during review meetings to triage multiple ideas at once</li>
     <li>Export periodically as a backup of your team's ideas</li>
     <li>Try dark mode for comfortable evening/low-light usage</li>
+    <li>Everything is keyboard-reachable: Tab to a stat card, idea card, list row or column header and press Enter/Space to activate it; press Esc to close a dialog or clear filters</li>
   </ul>
 
   <h2 id="modular">v3 Modular Version (Developer Info)</h2>
@@ -391,7 +396,7 @@ th { background: #f8fafc; font-weight: 600; }
 
   <hr style="margin:3rem 0 1rem;border:none;border-top:1px solid var(--border)">
   <p style="color:var(--text-light);font-size:.75rem;text-align:center">
-    Idea Board v2.4.8 / v3.0-modular — Architecture Middleware Integration Team — Updated September 2026<br>
+    Idea Board v2.5.0 — Architecture Middleware Integration Team — Updated September 2026<br>
     <strong>Powered by Forjé</strong><br>
     &copy; 2026 Isaac A Gera. All rights reserved.
   </p>

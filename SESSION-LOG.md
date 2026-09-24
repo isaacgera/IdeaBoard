@@ -10,7 +10,7 @@
   - Internal GitLab Pages: (deployed via `gitlab.prod.ec.devops.nat.bt.com`)
 - **Files:** `ideaboard.html` (UI/CSS), `app.js` (logic), `userguide.html` (documentation), `dummy-data.json` (sample data)
 - **Backend:** Firebase Realtime Database (real-time multi-user sync)
-- **Current Version:** v2.4.8
+- **Current Version:** v2.5.0 (code-complete this session; awaiting Isaac's live sign-off before marking Built)
 
 ---
 
@@ -1169,3 +1169,157 @@ ideas are stored?
 - `database.rules.json` is a new file to include in the next `git pushall` if Isaac wants the
   rules tracked in the repos (optional — it doesn't affect the deployed app or Pages).
 - Ideas.md unchanged (app already `Built (v2.4.8)`; this was an incident fix, not a status change).
+
+
+### Session 12 — Addendum (same date): a11y/UX prototype started — CHECKPOINT (work in progress)
+
+**Mode:** Quick Spec / prototype-first. **Prototype only — live app untouched (stays v2.4.8).**
+Paused mid-flight at Isaac's request to resume in a fresh session. This entry is a checkpoint,
+not a completed piece of work.
+
+#### Context
+- New prototype folder created earlier: **`prototypes/a11y-ux/`** — a faithful copy of the live
+  v2.4.8 monolith with accessibility/UX changes baked in, targeting a future **live v2.5.0**.
+  (Separate from the existing `prototypes/` Entra-auth prototype so the two experiments don't tangle.)
+- **Storage isolated:** all localStorage keys namespaced `ibax_*`
+  (`ibax_data`, `ibax_user`, `ibax_theme`, `ibax_tour_done`).
+- **Firebase shared with live** (project `ideaboard-iag-2026`), **not** isolated — this is an
+  interaction/a11y change, not a data-model change, so a shared DB is fine. (Open rules, per the
+  Session 12 incident fix.)
+- Files in `prototypes/a11y-ux/`: `ideaboard.html`, `app-a11y.js` (version tag
+  `2.5.0-a11y-proto`, ~760 lines), `LightHouse - Prototype.pdf`, `userguide.html`,
+  `manifest.json`, `sw.js`, icons.
+
+#### Done this session
+- **Read the Lighthouse PDF** (`prototypes/a11y-ux/LightHouse - Prototype.pdf`). It's vector-glyph —
+  only structure/links are extractable, not the rendered body text (reported honestly to Isaac, not
+  claimed as a full text read). Cross-referenced the embedded axe rule links to read the scores:
+  **Accessibility 93, Best Practices 100, SEO 100, Performance 98.** The two remaining Accessibility
+  failures are **`color-contrast`** and **`target-size`** (axe 4.12 rule links).
+- **Traced the code** for the two open tasks: read `state.dashHighlight`/`dashLocked`, `dashFilter`,
+  `dashHover`/`dashHoverEnd`/`dashClearOnOutsideClick`, `ideaMatchesDashHighlight`,
+  `applyDashHighlight()`, `render()`, `saveIdea()` in `app-a11y.js`.
+- **Bug 1 key finding (root cause suspected, NOT yet fixed):** `render()` already re-applies the
+  filter (`if (state.dashHighlight) applyDashHighlight();`) after rebuilding the board. The filter
+  drop on modal-open is therefore suspected to come from the Firebase `.on('value')` re-render
+  path when the modal opens — the highlight state isn't surviving that re-render. Still need to
+  read `showModal`/`showDetail`/`closeModal` (not yet located) before editing.
+
+#### NOT done — carried to next session (the two open tasks)
+1. **Bug 1 — filter lost when a modal opens.** Isaac's exact report: clicking an idea (list *and*
+   board) opens the modal fine, but the background filter is lost and all ideas reappear.
+   → Fix approach: read `showModal`/`showDetail`/`closeModal`, then ensure
+   `state.dashHighlight`/`dashLocked` persist through the Firebase `.on('value')` re-render that
+   fires when a modal opens (re-assert the highlight after that re-render, don't let it reset).
+2. **Header rework** (`prototypes/a11y-ux/ideaboard.html`). Isaac's exact ask: near the title,
+   keep only **one** of the two labels — keep "Team Innovation Tracker" and rename it to
+   **"Arch. Middleware Team Innovation Tracker"** (drop the separate "Architecture Middleware
+   Integration Team" team-name span); move the **version tag** closer to the title; move the
+   **"last updated X hr…"** stamp next to the title.
+   → Current markup: `<h1>Idea Board <span class="team-name">Architecture Middleware Integration
+   Team</span> <span class="version-badge" id="app-version">` and
+   `<span class="subtitle">Team Innovation Tracker <span class="last-updated" id="last-updated">`.
+
+#### Also carried forward (Lighthouse 93 → 100, once the two tasks are done)
+- **`color-contrast`:** dark-theme `--text-light` token + hardcoded kanban badge colours
+  (e.g. `.col-new` / `#dbeafe`) in `ideaboard.html`.
+- **`target-size`:** bump `vote-btn` / close-btn / `btn-sm` tap targets to ≥24px.
+
+#### Verify (next session, after edits)
+- `get_diagnostics` on both edited files. Isaac to re-run Lighthouse and manually confirm the
+  filter now persists when a modal opens (browser test can't be run here — Windows shell quirk).
+
+#### After sign-off (future)
+- Port finalized changes to live (`ideaboard.html` + `app.js`), bump to **v2.5.0**, changelog,
+  PWA cache-name bump, docs, keep the "Powered by Forjé" footer, Isaac runs `git pushall`.
+- **Ideas.md:** set the Idea Board row to **In Progress** (prototype work underway) at the start
+  of the next session — currently still `Built (v2.4.8)`. `Built` stays until Isaac signs off v2.5.0.
+
+**Status: In Progress — prototype, awaiting next session. No live changes, no version bump, nothing committed.**
+
+
+## Session 13 — Sep 24, 2026
+**a11y/UX prototype completed + BT-purple rebrand, then ported to LIVE (v2.4.8 → v2.5.0)**
+
+Continued from the Session 12 addendum checkpoint. Finished the `prototypes/a11y-ux/`
+prototype, took it through the Pre-Live agent + Lighthouse to 100, rebranded to BT purple,
+then ported the whole thing into the live app as **v2.5.0**. Quick Spec / prototype-first,
+then the deliberate one-pass port. Ideas.md row flipped to **In Progress** at the start.
+
+### Prototype work finished (in `prototypes/a11y-ux/`, then ported)
+- **Bug 1 — filter lost when a modal opens:** root cause was `dashClearOnOutsideClick`
+  treating the idea-open click as an outside click. Fixed to ignore clicks on idea cards,
+  list rows, the modal overlay, and vote buttons; `render()` re-asserts the highlight after
+  the Firebase re-render.
+- **Bug 2 — first stat-card click showed all ideas:** the toggle keyed off the transient
+  hover highlight (which hover had already set to that card). Rebased the toggle on
+  `state.dashLocked` so the first click/Enter locks the previewed filter; a second clears it.
+  Mouse and keyboard now identical.
+- **Header rework:** dropped the separate team-name span; single subtitle renamed
+  "Arch. Middleware Team Innovation Tracker"; version badge + last-updated by the title.
+- **Filter model + borders:** hover/keyboard-focus = SINGLE border (preview); click/Enter =
+  DOUBLE border (locked). Border moved to the CONTAINER (kanban column / list-view box), not
+  each card/row. `onfocus`/`onblur` added to stat cards so keyboard preview matches hover.
+- **Contributors:** replaced the "Top Contributor" stat with a **Contributors** count
+  (distinct submitters; all-ideas highlight); added a toolbar **Contributors** dropdown filter;
+  renamed the Category/Priority dropdown placeholders to "Categories"/"Priority".
+- **Dashboard counts** now reflect the active toolbar filters (status card never zeroes itself).
+- **Clear filters:** context-aware "✕ Clear filters (N)" button (shown only when a filter is
+  active) + **Esc** clears all filters. Filter result count announced to AT.
+- **Manifest screenshots:** copied `screenshot-wide.png` (1280×720) + `screenshot-narrow.png`
+  (720×1280) into the prototype and declared them with `form_factor` (cleared both DevTools
+  "Richer PWA Install UI" warnings).
+- **Pre-Live Testing Agent:** run on the prototype — verdict "minor fixes, no blockers";
+  applied its cheap wins (comment-delete ×+aria-label already present, de-duplicated bulk
+  announcements, filter result announcement).
+- **Lighthouse → Accessibility 100 (light AND dark):** fixed contrast on dark `--text-light`
+  (#94a3b8 → #aab6c9); tokenised kanban column-header colours so they theme; dedicated
+  `--statnum-*` colours (amber stat number was the failure); `.priority-high` → #b91c1c; base
+  tap targets ≥24px on `.vote-btn`/`.close-btn`/`.btn-sm`; added standard `line-clamp`. Then a
+  second dark-theme pass: white-on-primary failed because dark `--primary` is a light violet →
+  introduced an **`--on-primary`** token (white light / dark ink dark) for buttons, the active
+  view-toggle, avatar, clear-filters; gave the bulk bar a fixed deep-purple background.
+- **BT-purple rebrand:** retuned the `--primary` family to BT purple
+  (`#5514b4` light / `#b39dff` dark, `--primary-light` `#7e3ff2`/`#cdbcff`), `theme-color`
+  `#5514b4`, bulk bar `#4c1d95`, and updated the icon generator palette. Accessibility stayed
+  100 in both themes (Isaac confirmed).
+
+### Ported to LIVE (v2.4.8 → v2.5.0) — files changed
+- **`ideaboard.html`** — rebuilt from the prototype: BT-purple tokens + `--on-primary` +
+  statnum/col tokens, single/double container border rules, header rework, Contributors
+  dropdown + renamed Categories/Priority, Clear-filters button, ≥24px tap targets, `line-clamp`,
+  bulk-bar fixed bg, `theme-color #5514b4`, `app.js?v=2.5.0`. PROTOTYPE banner + proto tag
+  removed; title/description/apple-title de-proto'd; "Powered by Forjé" footer kept.
+- **`app.js`** — rebuilt from `app-a11y.js`: `APP_VERSION = '2.5.0'` + a full v2.5.0 changelog
+  entry; localStorage keys back to `ib_*` (were `ibax_*` in the sandbox); de-proto'd the name
+  prompt, export filename, and version-badge title. All the a11y/filter/contributors/clear-
+  filters logic + the two bug fixes carried over verbatim. (No Entra auth gate — that stays
+  prototype-only per Session 10 Addendum 4.)
+- **`sw.js`** — `CACHE_VERSION` `v2.4.8` → `v2.5.0`; precache `./app.js?v=2.5.0`.
+- **`manifest.json`** — `theme_color` `#6366f1` → `#5514b4`.
+- **`make_icons.py`** (live) — palette updated to BT purple (`#5514b4`/`#7e3ff2`) + docstring.
+- **`userguide.html`** — version badge + footer → v2.5.0; BT-purple `--primary`; documented the
+  Contributors filter/stat, Clear filters + Esc, the single/double border + keyboard-parity
+  filtering, filters-affect-dashboard-counts, and a keyboard-reachability tip. Kept Forjé footer.
+- Diagnostics clean on all six edited files.
+
+### Data safety / migration notes
+- Live keeps the same Firebase DB and the same `ib_*` localStorage keys — **no data migration**;
+  existing ideas/users/theme/tour flag all carry over untouched.
+- The live DB rules are still the open, non-expiring rules from the Session 12 incident fix.
+
+### Still to do (handed to Isaac — needs his terminal / sign-off)
+1. **Regenerate the live BT-purple icons:** run `python make_icons.py` in the Idea Board folder
+   (regenerates `icon-192/512/512-maskable.png` + the two screenshots). Not runnable here
+   (Python stub + Windows shell quirk). Until then the live tab/header icon stays the old indigo.
+2. **Verify the live build on Live Server** (BT-purple UI + icon, filters, Clear filters, dark
+   mode; optional Lighthouse re-check).
+3. **`git pushall`** (origin, team, github) to redeploy all three Pages sites — Isaac's to run.
+4. On sign-off: set **Ideas.md** to `Built (Idea Board v2.5.0)` (currently In Progress).
+
+### Status
+- **Code-complete at v2.5.0; NOT yet committed/pushed; live sites still on v2.4.8** until Isaac
+  runs `git pushall`. Version stays In Progress / awaiting sign-off per the standing rule
+  (Forjé doesn't self-mark Built).
+- Carried-forward (unchanged): TASK-02 v3-modular parity port (still frozen ~v2.3; treat as a
+  Spec); the a11y-ux prototype folder remains as the reference for this release.

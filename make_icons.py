@@ -2,7 +2,7 @@
 Idea Board PWA icon generator — pure standard library (no Pillow, no network).
 
 Writes valid PNGs using only zlib + struct. Renders the brand mark:
-an indigo rounded-square tile with a white lightbulb glyph, matching the
+a BT-purple rounded-square tile with a white lightbulb glyph, matching the
 header brand-icon in ideaboard.html.
 
 Outputs (in the same folder):
@@ -16,9 +16,9 @@ import struct
 import zlib
 import math
 
-# Brand palette (from ideaboard.html :root)
-PRIMARY = (99, 102, 241)       # #6366f1 indigo
-PRIMARY_LIGHT = (129, 140, 248)  # #818cf8
+# Brand palette (from ideaboard.html :root) — BT purple (was indigo #6366f1).
+PRIMARY = (85, 20, 180)        # #5514b4 BT purple
+PRIMARY_LIGHT = (126, 63, 242)  # #7e3ff2
 ACCENT = (245, 158, 11)        # #f59e0b amber (bulb glow)
 WHITE = (255, 255, 255)
 
