@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Idea Board — a11y/UX prototype</title>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5514b4">
+<meta name="description" content="Team innovation tracker — a11y/UX prototype (not the live app).">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Idea Board (proto)">
+<style>
+:root, [data-theme="light"] {
+  /* BT-purple brand palette (was indigo #4f46e5). Deep enough that white
+     on-primary text keeps AA contrast (~9:1). */
+  --primary: #5514b4; --primary-light: #7e3ff2; --accent: #f59e0b;
+  --bg: #f8fafc; --surface: #fff; --surface-alt: #f1f5f9;
+  --text: #1e293b; --text-light: #475569; --border: #e2e8f0;
+  --radius: 10px; --shadow: 0 2px 8px rgba(0,0,0,.06);
+  --status-new: #3b82f6; --status-progress: #f59e0b; --status-review: #8b5cf6; --status-done: #10b981;
+  --priority-high: #ef4444; --priority-medium: #f59e0b; --priority-low: #6b7280;
+  --vote-up: #10b981; --vote-down: #ef4444;
+  /* Text/icon colour for elements sitting on a --primary / --primary-light fill.
+     White works on the light theme's deep indigo; dark theme needs dark ink
+     because its --primary is a light indigo (white would fail contrast). */
+  --on-primary: #fff;
+  /* Kanban column-header colours (tokenised so they theme in dark mode). */
+  --col-new-bg: #dbeafe; --col-new-fg: #1e40af;
+  --col-progress-bg: #fef3c7; --col-progress-fg: #92400e;
+  --col-review-bg: #ede9fe; --col-review-fg: #5b21b6;
+  --col-done-bg: #d1fae5; --col-done-fg: #065f46;
+  --col-count-bg: rgba(255,255,255,.7);
+  /* Dashboard stat-number text colours — darker than the --status-* accents so
+     the big numbers meet WCAG AA on the card surface (amber was the failure). */
+  --statnum-new: #1d4ed8; --statnum-progress: #b45309; --statnum-review: #6d28d9; --statnum-done: #047857;
+}
+[data-theme="dark"] {
+  /* BT-purple, lightened for dark surfaces so it reads as text/accent (~6:1). */
+  --primary: #b39dff; --primary-light: #cdbcff; --accent: #fbbf24;
+  --bg: #0f172a; --surface: #1e293b; --surface-alt: #334155;
+  --text: #f1f5f9; --text-light: #aab6c9; --border: #334155;
+  --shadow: 0 2px 8px rgba(0,0,0,.3);
+  --status-new: #60a5fa; --status-progress: #fbbf24; --status-review: #a78bfa; --status-done: #34d399;
+  --priority-high: #f87171; --priority-medium: #fbbf24; --priority-low: #9ca3af;
+  --vote-up: #34d399; --vote-down: #f87171;
+  /* Dark theme's --primary is a light violet, so on-primary text must be dark ink. */
+  --on-primary: #2e1065;
+  /* Dark kanban headers: deep tinted backgrounds with light text (AA-safe). */
+  --col-new-bg: #1e3a5f; --col-new-fg: #bfdbfe;
+  --col-progress-bg: #4a3410; --col-progress-fg: #fde68a;
+  --col-review-bg: #3b2e63; --col-review-fg: #ddd6fe;
+  --col-done-bg: #103b2e; --col-done-fg: #a7f3d0;
+  --col-count-bg: rgba(0,0,0,.35);
+  /* Dark stat-number colours — light tints that clear AA on the dark surface. */
+  --statnum-new: #93c5fd; --statnum-progress: #fcd34d; --statnum-review: #c4b5fd; --statnum-done: #6ee7b7;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; transition: background .3s, color .3s; }
+
+/* PROTOTYPE banner — makes it impossible to mistake this for the live app. */
+.proto-banner { position: sticky; top: 0; z-index: 4000; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .35rem .8rem; font-size: .74rem; font-weight: 700; letter-spacing: .4px; color: #422006; text-align: center;
+  background: repeating-linear-gradient(45deg, #fde68a, #fde68a 12px, #fcd34d 12px, #fcd34d 24px); border-bottom: 1px solid #d97706; }
+.proto-banner .proto-tag { font-weight: 600; background: rgba(66,32,6,.12); padding: .05rem .45rem; border-radius: 999px; letter-spacing: .3px; }
+
+.app { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; padding: .8rem 1.2rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); position: relative; overflow: hidden; }
+header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-light), var(--accent), var(--status-done)); }
+.header-left { display: flex; align-items: center; }
+.header-brand { display: flex; align-items: center; gap: .7rem; }
+.brand-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(99,102,241,.25); overflow: hidden; }
+.brand-icon img { width: 100%; height: 100%; display: block; }
+header h1 { font-size: 1.3rem; color: var(--primary); line-height: 1.2; margin: 0; }
+header .subtitle { font-size: .72rem; color: var(--text-light); font-weight: 400; display: block; letter-spacing: .3px; }
+.last-updated { margin-left: .5rem; font-size: .65rem; color: var(--text-light); opacity: .8; }
+.last-updated::before { content: '\2022 '; }
+.version-badge { margin-left: .4rem; font-size: .6rem; font-weight: 600; color: var(--primary); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: .05rem .4rem; letter-spacing: .3px; vertical-align: middle; }
+
+.btn { padding: .4rem .8rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: .8rem; font-weight: 500; transition: all .2s; display: inline-flex; align-items: center; gap: .3rem; }
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.btn-primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); color: var(--on-primary); }
+.btn-sm { padding: .25rem .5rem; font-size: .72rem; min-height: 24px; }
+.btn-danger { color: #dc2626; border-color: #fca5a5; }
+.btn-danger:hover { background: #fef2f2; color: #dc2626; border-color: #dc2626; }
+
+.toolbar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.toolbar .search-box { flex: 1; min-width: 180px; padding: .4rem .7rem; border: 1px solid var(--border); border-radius: 6px; font-size: .82rem; outline: none; background: var(--surface); color: var(--text); transition: border-color .2s; }
+.toolbar .search-box:focus { border-color: var(--primary); }
+.toolbar select { padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .8rem; background: var(--surface); color: var(--text); cursor: pointer; }
+.toolbar select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.view-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.view-toggle button { padding: .4rem .7rem; border: none; background: var(--surface); color: var(--text); cursor: pointer; font-size: .78rem; font-weight: 500; transition: all .2s; }
+.view-toggle button.active { background: var(--primary); color: var(--on-primary); }
+.view-toggle button:hover:not(.active) { background: var(--surface-alt); }
+.view-toggle button:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+/* Clear-filters button: only shown (via JS) when a filter is active. */
+.btn-clear-filters { color: var(--primary); border-color: var(--primary); background: var(--surface-alt); }
+.btn-clear-filters:hover { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+
+/* Dashboard Stats */
+.dashboard { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.stat-card { flex: 1; min-width: 100px; padding: .6rem .8rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); text-align: center; box-shadow: var(--shadow); transition: all .3s cubic-bezier(.4,0,.2,1); }
+.stat-card.clickable { cursor: pointer; }
+.stat-card.clickable:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.stat-card .stat-number { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text); }
+.stat-card .stat-label { display: block; font-size: .65rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .3px; }
+.stat-card.stat-new .stat-number { color: var(--statnum-new); }
+.stat-card.stat-progress .stat-number { color: var(--statnum-progress); }
+.stat-card.stat-review .stat-number { color: var(--statnum-review); }
+.stat-card.stat-done .stat-number { color: var(--statnum-done); }
+
+/* Stat card hover: zoom active, shrink siblings */
+.dashboard:hover .stat-card.clickable { transform: scale(0.93); opacity: 0.7; }
+.dashboard:hover .stat-card.clickable:hover { transform: scale(1.12); opacity: 1; box-shadow: 0 6px 24px rgba(99,102,241,.2), inset 0 1px 0 rgba(255,255,255,.3); border-color: var(--primary); z-index: 2; }
+/* Keyboard parity: focusing a stat card previews the same emphasis as hover. */
+.dashboard:focus-within .stat-card.clickable { transform: scale(0.93); opacity: 0.7; }
+.dashboard .stat-card.clickable:focus-visible { transform: scale(1.12); opacity: 1; box-shadow: 0 6px 24px rgba(99,102,241,.2), inset 0 1px 0 rgba(255,255,255,.3); border-color: var(--primary); z-index: 2; }
+/* Locked (clicked) card: a DOUBLE border — the card's own primary border plus a
+   surface-coloured gap ring and an outer primary ring — to clearly distinguish a
+   locked filter from the single-border hover preview. */
+.stat-card.active { transform: scale(1.08) !important; opacity: 1 !important; border-color: var(--primary); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary), 0 6px 24px rgba(99,102,241,.25), inset 0 1px 0 rgba(255,255,255,.3); }
+.dashboard:has(.stat-card.active) .stat-card:not(.active) { transform: scale(0.92); opacity: 0.6; }
+
+/* Dashboard highlight: dim non-matching items.
+   Border weight signals filter state, matching the summary tab:
+     preview (hover/keyboard focus) = SINGLE border on the matching items;
+     locked  (click/Enter, .dash-locked on #board-content) = DOUBLE border. */
+/* Dimming stays per-item; the border/ring is applied to the CONTAINER only
+   (the whole kanban column, and the whole list-view box) — not each card/row. */
+.idea-card.dash-dim { opacity: 0.08; transform: scale(0.97); pointer-events: none; transition: all .3s; }
+.idea-card.dash-highlight { opacity: 1; transform: scale(1); transition: all .3s; }
+.list-table tbody tr.dash-dim { display: none; }
+.list-table tbody tr.dash-highlight { opacity: 1; background: rgba(99,102,241,.04); }
+.kanban-column.dash-dim { opacity: 0.2; transform: scale(0.96); transition: all .3s; }
+.kanban-column.dash-highlight { opacity: 1; transform: scale(1); box-shadow: 0 0 0 1px var(--primary); border-radius: var(--radius); transition: all .3s; }
+#board-content.dash-locked .kanban-column.dash-highlight { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }
+/* List view: ring the whole table box when a filter is active. */
+#board-content.dash-locked .list-view.dash-active,
+.list-view.dash-active { box-shadow: 0 0 0 1px var(--primary); }
+#board-content.dash-locked .list-view.dash-active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }
+
+/* Kanban */
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem; margin-bottom: 1.5rem; }
+.kanban-column { background: var(--surface-alt); border-radius: var(--radius); padding: .6rem; min-height: 400px; transition: background .2s, border .2s; border: 2px solid transparent; }
+.kanban-column-header { font-size: .82rem; font-weight: 700; padding: .4rem .6rem; border-radius: 6px; margin-bottom: .5rem; display: flex; align-items: center; justify-content: space-between; }
+.kanban-column-header .count { font-size: .7rem; background: var(--col-count-bg); padding: .1rem .4rem; border-radius: 10px; font-weight: 600; }
+.col-new .kanban-column-header { background: var(--col-new-bg); color: var(--col-new-fg); }
+.col-progress .kanban-column-header { background: var(--col-progress-bg); color: var(--col-progress-fg); }
+.col-review .kanban-column-header { background: var(--col-review-bg); color: var(--col-review-fg); }
+.col-done .kanban-column-header { background: var(--col-done-bg); color: var(--col-done-fg); }
+
+.idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .6rem; margin-bottom: .5rem; cursor: pointer; transition: all .15s; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+.idea-card:hover { border-color: var(--primary); box-shadow: 0 3px 12px rgba(99,102,241,.12); transform: translateY(-1px); }
+/* Keyboard focus parity with the hover lift. */
+.idea-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-color: var(--primary); box-shadow: 0 3px 12px rgba(99,102,241,.12); }
+.idea-card .card-title { font-size: .82rem; font-weight: 600; margin-bottom: .3rem; line-height: 1.3; }
+.idea-card .card-meta { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; font-size: .68rem; color: var(--text-light); }
+.idea-card .card-category { background: var(--surface-alt); padding: .1rem .4rem; border-radius: 4px; font-weight: 500; }
+.idea-card .card-priority { padding: .1rem .4rem; border-radius: 4px; font-weight: 600; color: #fff; font-size: .65rem; }
+/* Badge backgrounds darkened to the 600/700 shades so white text meets WCAG AA
+   (>=4.5:1) at this small font size. The --priority-* tokens are unchanged for
+   use elsewhere (borders/indicators). */
+.priority-high { background: #b91c1c; }
+.priority-medium { background: #92400e; }
+.priority-low { background: #4b5563; }
+.idea-card .card-benefits { font-size: .72rem; color: var(--text-light); margin-top: .3rem; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.idea-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: .4rem; font-size: .68rem; color: var(--text-light); }
+.card-actions { display: flex; align-items: center; gap: .4rem; }
+.card-comment-count { font-size: .65rem; color: var(--text-light); }
+
+/* Vote Widget */
+.vote-widget, .detail-vote-widget { display: inline-flex; align-items: center; gap: .15rem; }
+.vote-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; background: none; border: none; cursor: pointer; font-size: .7rem; padding: .1rem .25rem; border-radius: 3px; color: var(--text-light); transition: all .15s; line-height: 1; }
+.vote-btn:hover { background: var(--surface-alt); }
+.vote-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.vote-btn.up:hover, .vote-btn.up.active { color: var(--vote-up); }
+.vote-btn.down:hover, .vote-btn.down.active { color: var(--vote-down); }
+.vote-score { font-size: .72rem; font-weight: 700; min-width: 16px; text-align: center; color: var(--text-light); }
+.vote-score.positive { color: var(--vote-up); }
+.vote-score.negative { color: var(--vote-down); }
+.vote-cell { text-align: center; }
+
+/* List View */
+.list-view { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+.list-table { width: 100%; border-collapse: collapse; font-size: .82rem; min-width: 1080px; }
+.list-table th { background: var(--surface-alt); font-weight: 600; text-align: left; padding: 0; border-bottom: 2px solid var(--border); white-space: nowrap; }
+/* Sortable headers are real buttons now (keyboard-operable). The button fills
+   the cell so the whole header stays clickable. */
+.list-table th .th-sort { display: flex; align-items: center; gap: .2rem; width: 100%; padding: .6rem .8rem; background: none; border: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.list-table th .th-sort:hover { color: var(--primary); }
+.list-table th .th-sort:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.list-table th.checkbox-col, .list-table th.plain-col { padding: .6rem .8rem; }
+.list-table td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.list-table tbody tr:hover { background: var(--surface-alt); }
+.list-table tbody tr { cursor: pointer; transition: background .15s; }
+.list-table tbody tr:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; background: var(--surface-alt); }
+.status-badge { padding: .15rem .5rem; border-radius: 10px; font-size: .7rem; font-weight: 600; color: #fff; white-space: nowrap; }
+/* Darkened to 600/700 shades so white badge text meets WCAG AA (>=4.5:1). */
+.status-new { background: #2563eb; }
+.status-in-progress { background: #92400e; }
+.status-review { background: #7c3aed; }
+.status-done { background: #047857; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); width: 100%; max-width: 580px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem; border-bottom: 1px solid var(--border); }
+.modal-header h2 { font-size: 1.1rem; color: var(--primary); }
+.modal-header .close-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-light); padding: .2rem .4rem; border-radius: 4px; }
+.modal-header .close-btn:hover { background: var(--surface-alt); color: var(--text); }
+.modal-header .close-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.modal-body { padding: 1.2rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: .3rem; color: var(--text); }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: .5rem .7rem; border: 1px solid var(--border); border-radius: 6px; font-size: .85rem; font-family: inherit; outline: none; background: var(--surface); color: var(--text); transition: border-color .2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.modal-footer { display: flex; gap: .5rem; justify-content: flex-end; padding: 1rem 1.2rem; border-top: 1px solid var(--border); }
+
+.detail-section { margin-bottom: 1rem; }
+.detail-section h4 { font-size: .78rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .3rem; }
+.detail-section p { font-size: .88rem; line-height: 1.6; }
+.detail-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.detail-meta-item { font-size: .8rem; }
+
+/* Comments */
+.comments-section { border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; }
+.comments-section h4 { font-size: .82rem; color: var(--text-light); margin-bottom: .5rem; }
+.comments-list { max-height: 250px; overflow-y: auto; margin-bottom: .8rem; }
+.comment-item { padding: .5rem .6rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: .4rem; background: var(--surface-alt); }
+.comment-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .2rem; font-size: .72rem; }
+.comment-user { font-weight: 700; color: var(--primary); }
+.comment-time { color: var(--text-light); }
+.comment-text { font-size: .8rem; line-height: 1.5; }
+.comment-form { display: flex; gap: .4rem; align-items: flex-end; }
+.comment-form textarea { flex: 1; padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .8rem; font-family: inherit; outline: none; resize: none; min-height: 38px; background: var(--surface); color: var(--text); }
+.comment-form textarea:focus { border-color: var(--primary); }
+
+/* User bar */
+.user-bar { display: flex; align-items: center; gap: .5rem; }
+.user-bar .user-name { font-size: .78rem; font-weight: 500; color: var(--text-light); }
+.user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: var(--on-primary); display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; }
+.online-count { font-family: inherit; border: none; font-size: .7rem; color: var(--text-light); background: #dcfce7; padding: .15rem .4rem; border-radius: 10px; cursor: pointer; transition: all .2s; }
+.online-count:hover { background: #bbf7d0; box-shadow: 0 2px 6px rgba(16,185,129,.2); }
+.online-count:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.theme-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; padding: .3rem .5rem; font-size: 1rem; line-height: 1; }
+.theme-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Toast */
+.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: #1e293b; color: #fff; padding: .5rem 1.2rem; border-radius: 6px; font-size: .82rem; z-index: 3000; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+/* Drag and Drop */
+.idea-card[draggable="true"] { cursor: grab; }
+.idea-card[draggable="true"]:active { cursor: grabbing; }
+.idea-card.dragging { opacity: 0.4; transform: rotate(2deg); }
+.kanban-column.drag-over { background: var(--primary); background: rgba(99,102,241,.08); border: 2px dashed var(--primary); }
+.drop-placeholder { padding: 2rem 1rem; text-align: center; color: var(--text-light); font-size: .78rem; font-style: italic; border: 1px dashed var(--border); border-radius: 6px; }
+.idea-card.drop-above { border-top: 3px solid var(--primary); }
+.idea-card.drop-below { border-bottom: 3px solid var(--primary); }
+
+/* Sort Icons */
+.sort-icon { font-size: .65rem; color: var(--text-light); margin-left: .2rem; }
+.sort-icon.active { color: var(--primary); }
+
+/* Timeline */
+.timeline { display: flex; gap: 0; margin: .5rem 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.timeline-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: .5rem .3rem; background: var(--surface-alt); border-right: 1px solid var(--border); gap: .2rem; }
+.timeline-item:last-child { border-right: none; }
+.timeline-item.active { background: rgba(99,102,241,.1); }
+.timeline-icon { font-size: .9rem; color: var(--text-light); }
+.timeline-item.active .timeline-icon { color: var(--primary); }
+.timeline-label { font-size: .68rem; font-weight: 600; color: var(--text-light); }
+.timeline-item.active .timeline-label { color: var(--primary); }
+.timeline-date { font-size: .62rem; color: var(--text-light); text-align: center; }
+.timeline-item.active .timeline-date { color: var(--text); font-weight: 500; }
+
+/* Audit Log */
+.audit-log { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.audit-entry { display: flex; align-items: baseline; gap: .5rem; padding: .4rem .6rem; border-bottom: 1px solid var(--border); font-size: .75rem; flex-wrap: wrap; }
+.audit-entry:last-child { border-bottom: none; }
+.audit-entry:nth-child(odd) { background: var(--surface-alt); }
+.audit-time { color: var(--text-light); font-size: .68rem; white-space: nowrap; min-width: 100px; }
+.audit-user { font-weight: 600; color: var(--primary); white-space: nowrap; }
+.audit-action { font-weight: 500; }
+.audit-details { color: var(--text-light); font-style: italic; }
+
+/* History cell */
+.history-cell { font-size: .72rem; max-width: 180px; line-height: 1.4; }
+.history-cell-action { display: block; font-weight: 600; }
+.history-cell-details { display: block; color: var(--text-light); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+.history-cell-meta { display: block; font-size: .65rem; color: var(--text-light); }
+
+/* Bulk Action Bar — fixed deep-indigo bar (theme-independent) so its white text
+   and controls keep AA contrast in BOTH themes; the theme's --primary goes light
+   in dark mode, which would fail white-on-primary. */
+.bulk-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .6rem .8rem; margin-bottom: .6rem; background: #4c1d95; border-radius: var(--radius); box-shadow: 0 4px 12px rgba(76,29,149,.25); position: sticky; top: 0; z-index: 10; }
+.bulk-bar .bulk-count { color: #fff; font-size: .82rem; font-weight: 600; margin-right: .3rem; }
+.bulk-bar select { padding: .3rem .5rem; border: 1px solid rgba(255,255,255,.3); border-radius: 5px; font-size: .75rem; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; }
+.bulk-bar select option { background: var(--surface); color: var(--text); }
+.bulk-bar .btn { border-color: rgba(255,255,255,.4); color: #fff; background: rgba(255,255,255,.1); }
+.bulk-bar .btn:hover { background: rgba(255,255,255,.25); border-color: #fff; }
+.bulk-bar .btn-danger { background: #dc2626; border-color: #dc2626; color: #fff; }
+.bulk-bar .btn-danger:hover { background: #b91c1c; }
+
+/* Checkbox column */
+.checkbox-col { width: 32px; min-width: 32px; text-align: center; padding: .3rem !important; }
+.checkbox-col input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary); }
+.list-table tr.row-selected { background: rgba(99,102,241,.08); }
+.list-table tr.row-selected td { border-color: rgba(99,102,241,.15); }
+
+/* Intro Tour */
+.tour-overlay { display: none; position: fixed; inset: 0; z-index: 5000; }
+.tour-overlay.active { display: block; }
+.tour-overlay::before { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1; }
+.tour-spotlight { position: absolute; z-index: 2; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,.55); transition: all .4s ease; pointer-events: none; }
+.tour-tooltip { position: absolute; z-index: 3; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; max-width: 360px; width: 90%; box-shadow: 0 12px 40px rgba(0,0,0,.2); transition: all .3s ease; }
+.tour-tooltip-content { margin-bottom: .8rem; }
+.tour-tooltip-content h3 { font-size: 1rem; color: var(--primary); margin-bottom: .4rem; }
+.tour-tooltip-content p { font-size: .82rem; color: var(--text); line-height: 1.6; }
+.tour-tooltip-footer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.tour-step-indicator { font-size: .7rem; color: var(--text-light); }
+.tour-nav { display: flex; gap: .3rem; }
+
+/* Responsive */
+@media (max-width: 1024px) { .kanban { grid-template-columns: repeat(2, 1fr); } .dashboard { flex-wrap: wrap; } }
+@media (max-width: 640px) { .kanban { grid-template-columns: 1fr; } .form-row { grid-template-columns: 1fr; } header { flex-direction: column; align-items: flex-start; } .toolbar { flex-direction: column; align-items: stretch; } .dashboard .stat-card { min-width: 80px; } }
+
+/* Larger tap targets on touch/coarse pointers (doesn't change the dense desktop look). */
+@media (pointer: coarse) {
+  .vote-btn { padding: .45rem .55rem; font-size: .85rem; }
+  .modal-header .close-btn { padding: .4rem .7rem; }
+  .btn-sm { padding: .45rem .7rem; }
+  .list-table th .th-sort { padding: .75rem .8rem; }
+}
+
+.app-footer { margin-top: 2rem; padding: 1rem 0 .5rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-light); font-size: .72rem; line-height: 1.6; display: flex; flex-direction: column; gap: .1rem; }
+.app-footer strong { color: var(--primary); font-weight: 600; letter-spacing: .2px; }
+.app-footer-copy { opacity: .85; }
+
+/* Visually-hidden helper for screen-reader-only live regions. */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media print { .proto-banner, header, .toolbar, .dashboard, .app-footer { display: none !important; } .kanban { grid-template-columns: repeat(2, 1fr); } .idea-card { break-inside: avoid; } }
+
+/* Respect reduced-motion: calm all transitions/animations and neutralise the
+   emphasis transforms (dashboard zoom, card lift, drag rotate, tour glide). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  .dashboard:hover .stat-card.clickable,
+  .dashboard:focus-within .stat-card.clickable,
+  .dashboard:hover .stat-card.clickable:hover,
+  .dashboard .stat-card.clickable:focus-visible,
+  .stat-card.active,
+  .dashboard:has(.stat-card.active) .stat-card:not(.active) { transform: none !important; }
+  .idea-card:hover, .idea-card:focus-visible { transform: none !important; }
+  .idea-card.dragging { transform: none !important; }
+  .kanban-column.dash-dim, .idea-card.dash-dim { transform: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="proto-banner" role="note" aria-label="Prototype build">
+  PROTOTYPE — a11y / interaction rework <span class="proto-tag" id="proto-tag">v2.5.0-a11y-proto</span> · not the live app
+</div>
+<div class="app">
+  <header>
+    <div class="header-left">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <img src="icon-192.png" alt="Idea Board logo" width="40" height="40">
+        </div>
+        <div>
+          <h1>Idea Board <span class="version-badge" id="app-version" title="App version"></span></h1>
+          <span class="subtitle">Arch. Middleware Team Innovation Tracker <span class="last-updated" id="last-updated"></span></span>
+        </div>
+      </div>
+    </div>
+    <div class="user-bar">
+      <button class="btn btn-sm" onclick="IB.startTour()" title="Take a guided tour">Tour</button>
+      <a class="btn btn-sm" href="userguide.html" target="_blank" title="User Guide">Guide</a>
+      <button class="theme-btn" id="theme-toggle" onclick="IB.toggleTheme()" title="Toggle dark/light mode" aria-label="Toggle dark and light mode"></button>
+      <button class="online-count" id="online-count" onclick="IB.showOnlineUsers()" style="display:none" aria-label="Show online users" title="Show online users">1 online</button>
+      <span class="user-name" id="user-display"></span>
+      <div class="user-avatar" id="user-avatar" aria-hidden="true"></div>
+      <button class="btn btn-sm" id="btn-switch-user" onclick="IB.changeUser()" title="Switch to a different user">Switch</button>
+    </div>
+  </header>
+
+  <main id="main-content">
+  <div id="dashboard-container"></div>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="IB.showAddIdea()" title="Add a new idea">+ New Idea</button>
+    <input type="text" class="search-box" id="search-input" placeholder="Search ideas..." oninput="IB.filterIdeas()" aria-label="Search ideas" title="Search ideas by title, description or benefits">
+    <select id="filter-category" onchange="IB.filterIdeas()" aria-label="Filter by category" title="Filter by category"><option value="">Categories</option></select>
+    <select id="filter-priority" onchange="IB.filterIdeas()" aria-label="Filter by priority" title="Filter by priority">
+      <option value="">Priority</option>
+      <option value="High">High</option>
+      <option value="Medium">Medium</option>
+      <option value="Low">Low</option>
+    </select>
+    <select id="filter-contributor" onchange="IB.filterIdeas()" aria-label="Filter by contributor" title="Filter by contributor"><option value="">Contributors</option></select>
+    <div class="view-toggle" role="group" aria-label="View mode">
+      <button id="view-kanban" class="active" onclick="IB.setView('kanban')" aria-pressed="true" title="Kanban board view">Board</button>
+      <button id="view-list" onclick="IB.setView('list')" aria-pressed="false" title="List / table view">List</button>
+    </div>
+    <button class="btn btn-sm btn-clear-filters" id="btn-clear-filters" onclick="IB.clearFilters()" style="display:none" title="Clear all active filters (Esc)">&#10005; Clear filters</button>
+    <button class="btn btn-sm" id="btn-manage-data" onclick="IB.showManageData()" style="display:none" title="Export, import, manage categories and users">Manage Data</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="IB.handleImport(this)" aria-label="Import ideas from JSON file">
+  </div>
+
+  <div id="board-content"></div>
+  </main>
+
+  <footer class="app-footer">
+    <span><strong>Powered by Forjé</strong></span>
+    <span class="app-footer-copy">&copy; 2026 Isaac A Gera. All rights reserved.</span>
+  </footer>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title-anchor" tabindex="-1"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<!-- Dedicated polite live region for status changes that shouldn't hijack the toast. -->
+<div class="sr-only" id="sr-live" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Intro Tour Overlay -->
+<div class="tour-overlay" id="tour-overlay">
+  <div class="tour-spotlight" id="tour-spotlight"></div>
+  <div class="tour-tooltip" id="tour-tooltip" role="dialog" aria-modal="true" aria-labelledby="tour-content" tabindex="-1">
+    <div class="tour-tooltip-content" id="tour-content"></div>
+    <div class="tour-tooltip-footer">
+      <span class="tour-step-indicator" id="tour-indicator"></span>
+      <div class="tour-nav">
+        <button class="btn btn-sm" id="tour-prev" onclick="IB.tourPrev()">Back</button>
+        <button class="btn btn-sm btn-primary" id="tour-next" onclick="IB.tourNext()">Next</button>
+        <button class="btn btn-sm" onclick="IB.tourEnd()">Skip Tour</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="app-a11y.js?v=2.5.0-a11y-proto"></script>
+<script>
+  // Register the service worker for offline app-shell support.
+  // Only registers over http(s) — skips file:// where SWs are unsupported.
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch((err) => {
+        console.warn('Service worker registration failed:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>

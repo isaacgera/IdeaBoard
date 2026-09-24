@@ -10,7 +10,7 @@
   - Internal GitLab Pages: (deployed via `gitlab.prod.ec.devops.nat.bt.com`)
 - **Files:** `ideaboard.html` (UI/CSS), `app.js` (logic), `userguide.html` (documentation), `dummy-data.json` (sample data)
 - **Backend:** Firebase Realtime Database (real-time multi-user sync)
-- **Current Version:** v2.5.0 (code-complete this session; awaiting Isaac's live sign-off before marking Built)
+- **Current Version:** v2.5.0 (shipped — verified, icons regenerated, git pushall done to all three remotes)
 
 ---
 
@@ -1323,3 +1323,27 @@ then the deliberate one-pass port. Ideas.md row flipped to **In Progress** at th
   (Forjé doesn't self-mark Built).
 - Carried-forward (unchanged): TASK-02 v3-modular parity port (still frozen ~v2.3; treat as a
   Spec); the a11y-ux prototype folder remains as the reference for this release.
+
+
+### Session 13 — Addendum (same session): signed off + marked Built (push pending)
+- Isaac regenerated the BT-purple icons (`python make_icons.py`) and verified the live app on
+  Live Server — BT-purple UI + icon, filters/Clear-filters/dark mode all good.
+- **Ideas.md flipped to `Built (Idea Board v2.5.0)`** (was In Progress) on Isaac's sign-off.
+- **Still pending: `git pushall`** (origin, team, github) — Isaac's to run; all three Pages sites
+  are still on v2.4.8 until then. Suggested files to stage: `app.js`, `ideaboard.html`, `sw.js`,
+  `manifest.json`, `userguide.html`, `make_icons.py`, `SESSION-LOG.md`, and the regenerated
+  `icon-192/512/512-maskable.png` + `screenshot-wide/narrow.png`. (Optional: also commit the
+  updated `Ideas.md` from the Ideas folder if tracking the backlog in the repo — it lives outside
+  this app folder, so it's a separate concern.)
+
+
+### Session 13 — Addendum 2 (same session): SHIPPED
+- `git pushall` run — v2.5.0 pushed `master:main` to all three remotes (origin/personal,
+  team, github), redeploying all three Pages sites. **Idea Board v2.5.0 is now live.**
+- Status: **Built (Idea Board v2.5.0)** in Ideas.md; live app at v2.5.0 across all sites.
+- If the update doesn't show immediately on a site, it's the cache-first service worker —
+  a hard refresh (or waiting for the SW to pick up the new `ideaboard-shell-v2.5.0` cache)
+  resolves it.
+- Session closed. Carried-forward (unchanged): TASK-02 v3-modular parity port (still frozen
+  ~v2.3; treat as a Spec when picked up); the `prototypes/a11y-ux/` folder stays as the
+  reference for this release.
