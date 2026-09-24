@@ -1105,3 +1105,67 @@ Powered by Forjé
 - Carried-forward (unchanged, future sessions): TASK-02 v3-modular parity port (parity → test →
   promote, treat as a Spec); optional manifest screenshots; Option A name-keyed identity.
 - Ideas.md unchanged (app already `Built (v2.4.8)`; branding/doc-sync, not a status change).
+
+
+## Session 12 — Sep 24, 2026
+**Incident: board went blank — expired Firebase test-mode rule (data safe)**
+
+### Symptom
+Isaac reported the Idea Board showed no entries — ideas added up to the previous day
+had vanished from the UI. Question raised: is there an issue with the backend where
+ideas are stored?
+
+### Diagnosis (verified, not guessed)
+- Backend is Firebase Realtime Database (`ideaboard-iag-2026`), with a localStorage
+  fallback; the live monolith reads `/ideas` as an **anonymous** client
+  (`db.ref('ideas').on('value', ...)` in `app.js`) — it has no Firebase auth.
+- Queried the live REST endpoint directly (`.../ideas.json`, shallow read, and root):
+  **all returned `401 Unauthorized`.** Endpoint alive (not a 404/deleted DB) → the DB
+  exists but was refusing unauthenticated reads.
+- Isaac opened the console **Rules** tab — rules were the Firebase **test-mode** default:
+  ```json
+  { "rules": { ".read": "now < 1790188200000", ".write": "now < 1790188200000" } }  // 2026-9-24
+  ```
+  `1790188200000` ms = **24 Sep 2026** (today). Test-mode rules grant access only until a
+  fixed 30-day expiry; the instant it passed, `.read`/`.write` both became `false`, so every
+  request (including the app's `/ideas` load) returned 401 → `state.ideas` stayed empty →
+  blank board.
+- **Root cause: the built-in test-mode rule expiry lapsed today.** Not data loss, not an
+  app bug — a scheduled lock that always sits in test-mode databases.
+
+### Data confirmed intact
+- Isaac opened the console **Data** tab: `/ideas` still populated (`idea002`, `idea003`,
+  `idea004`, `idea007`, `idea012`, …). Nothing was lost — the data was only unreadable.
+
+### Fix applied (by Isaac, in the Firebase console)
+- Replaced the expired test-mode rules with open, non-expiring rules and clicked Publish:
+  ```json
+  { "rules": { ".read": true, ".write": true } }
+  ```
+- Effect was immediate (no app redeploy needed): 401s cleared, the app's `/ideas` read
+  succeeded, board repopulated. **Isaac confirmed the data is now showing up.**
+- This restores the exact open posture the app already relied on (consciously accepted in
+  Session 10 Addendum 4). Because the new rules contain no `now <` expiry, Firebase won't
+  auto-lock them again.
+
+### Housekeeping done here
+- Created **`database.rules.json`** in the Idea Board folder — a version-controlled,
+  commented copy of the live rules (they previously lived only in the console, invisible to
+  the repo). Includes the incident history + the open-rules security caveat. Note: the
+  console remains authoritative; this file is documentation unless deployed via Firebase CLI.
+
+### Security caveat (unchanged, flagged again)
+- `".read": true / ".write": true` = anyone with the DB URL can read/write it directly.
+  Mitigated only by the board sitting behind the team's SAML/GitLab access, and the data
+  not being sensitive (Isaac's standing call).
+- **Proper lockdown remains a separate parked project:** it needs Firebase Authentication
+  wired into the app (the live app has none — the Session 9 Entra gate was UI-only and never
+  connected to Firebase). Scope as a Quick Spec/Plan if/when it's picked up; a rules-only
+  change can't secure the DB without app-side auth.
+
+### Status / notes
+- App code untouched; no version bump (this was a backend-rules incident + a new docs file).
+  Live app stays **v2.4.8**.
+- `database.rules.json` is a new file to include in the next `git pushall` if Isaac wants the
+  rules tracked in the repos (optional — it doesn't affect the deployed app or Pages).
+- Ideas.md unchanged (app already `Built (v2.4.8)`; this was an incident fix, not a status change).

@@ -1,0 +1,1262 @@
+{
+  "ideas": {
+    "idea002": {
+      "benefits": "Boosts team morale and creativity. Encourages cross-team collaboration. Has led to real product improvements at companies like Google and Atlassian.",
+      "category": "Team Culture",
+      "comments": [
+        {
+          "id": "mtmxtsdutxrgdwzzw",
+          "text": "Setup a a recurring meeting invite for New Ideas discussions & brainstorming sessions.",
+          "timestamp": 1788525370866,
+          "user": "Isaac Gera"
+        }
+      ],
+      "createdAt": 1724313600000,
+      "dates": {
+        "created": 1724313600000,
+        "inReview": 1787671615668,
+        "started": 1788525309803
+      },
+      "description": "Dedicate one hour every Friday afternoon for team members to work on personal projects, experiment with new tools, or collaborate on improvement ideas outside of BAU.",
+      "history": [
+        {
+          "action": "Status changed",
+          "details": "Review → In Progress",
+          "timestamp": 1787671608743,
+          "user": "IAG"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → Review",
+          "timestamp": 1787671615668,
+          "user": "IAG"
+        },
+        {
+          "action": "Status changed",
+          "details": "Review → New",
+          "timestamp": 1787671710286,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1788525309803,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Comment added",
+          "details": "Setup a a recurring meeting invite for New Ideas d...",
+          "timestamp": 1788525370866,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "idea002",
+      "priority": "Medium",
+      "sortOrder": 20,
+      "status": "In Progress",
+      "submittedBy": "Isaac Gera",
+      "title": "Weekly Innovation Hour",
+      "updatedAt": 1788525370866,
+      "updatedBy": "Isaac Gera"
+    },
+    "idea003": {
+      "benefits": "Reduces direct engagement and improves customer first-day experience. Available 24/7 unlike human agents.",
+      "category": "Customer Experience",
+      "createdAt": 1724227200000,
+      "dates": {
+        "created": 1724227200000
+      },
+      "description": "Build a chatbot for the Ops Support that guides new customers to ease them through the engagement process and FAQ answers without needing to contact support initially.",
+      "history": [
+        {
+          "action": "Edited",
+          "details": "Title, Description, Benefits",
+          "timestamp": 1787837973059,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Title, Priority: High → Low",
+          "timestamp": 1788530724749,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "idea003",
+      "priority": "Low",
+      "sortOrder": 80,
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Middleware Components - Knowledge Assistant / AI Chatbot",
+      "updatedAt": 1788530724749,
+      "updatedBy": "Isaac Gera"
+    },
+    "idea004": {
+      "benefits": "Faster incident detection (one place to look). Reduces context-switching. Easier handovers between shifts. Lower licensing costs by retiring redundant tools.",
+      "category": "Process Improvement",
+      "createdAt": 1724140800000,
+      "dates": {
+        "created": 1724140800000,
+        "started": 1790166653171
+      },
+      "description": "We currently have 6 different monitoring tools with separate dashboards. Propose creating a unified single-pane-of-glass dashboard using Grafana that aggregates key metrics from all sources.",
+      "history": [
+        {
+          "action": "Status changed",
+          "details": "In Progress → New",
+          "timestamp": 1787671708158,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1789561067733,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → New",
+          "timestamp": 1789561080936,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1790166653171,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → New",
+          "timestamp": 1790166659639,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "idea004",
+      "priority": "High",
+      "sortOrder": 120,
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Consolidate Monitoring Dashboards",
+      "updatedAt": 1790166659639,
+      "updatedBy": "Isaac Gera"
+    },
+    "idea007": {
+      "benefits": "Knowledge sharing across silos. Presentation skills development. Builds team identity. Low cost (just time investment).",
+      "category": "Team Culture",
+      "createdAt": 1723795200000,
+      "dates": {
+        "completed": 1724486400000,
+        "created": 1723795200000,
+        "inReview": 1724486400000,
+        "started": 1787837843901
+      },
+      "description": "Bi-weekly 30-45 minutes presentation where team members share something they have learned - a new technology, a post-mortem deep-dive, or a side project demo.",
+      "history": [
+        {
+          "action": "Status changed",
+          "details": "Done → New",
+          "timestamp": 1787671712881,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787837843901,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Description",
+          "timestamp": 1787837843901,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "idea007",
+      "priority": "Low",
+      "sortOrder": 100,
+      "status": "In Progress",
+      "submittedBy": "Isaac Gera",
+      "title": "Internal Tech Talk Series",
+      "updatedAt": 1787837843901,
+      "updatedBy": "Isaac Gera"
+    },
+    "idea012": {
+      "benefits": "Consistent quality across all runbooks. Faster onboarding. Reduces errors during incidents. Easier to maintain and review.",
+      "category": "Process Improvement",
+      "createdAt": 1723363200000,
+      "dates": {
+        "created": 1723363200000,
+        "started": 1723363200000
+      },
+      "description": "Create a standard template for all operational runbooks and migrate existing ad-hoc documentation into the new format. Include decision trees, escalation paths, and rollback steps.",
+      "history": [
+        {
+          "action": "Status changed",
+          "details": "In Progress → New",
+          "timestamp": 1787671705223,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "idea012",
+      "priority": "Low",
+      "sortOrder": 10,
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Runbook Standardisation",
+      "updatedAt": 1787671994855,
+      "updatedBy": "Isaac Gera"
+    },
+    "mt8rexnq5wh21n66l": {
+      "benefits": "We can get a lot of information on usage statistics, remediating issues beforehand, and a lot more.",
+      "category": "Process Improvement",
+      "createdAt": 1787668073703,
+      "dates": {
+        "created": 1787668073703
+      },
+      "description": "Approximately 2,000 servers with CFT are transferring files but we have zero visibility on them",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Sami",
+          "timestamp": 1787668073703,
+          "user": "Sami"
+        }
+      ],
+      "id": "mt8rexnq5wh21n66l",
+      "priority": "Low",
+      "sortOrder": 20,
+      "status": "New",
+      "submittedBy": "Sami",
+      "title": "Gain visibility on all CFT transfers across all BT servers",
+      "updatedAt": 1787668073703,
+      "updatedBy": "Sami"
+    },
+    "mt8rtbin1or2iwggx": {
+      "benefits": "Make it much easier to maintain and make additions to MQED.",
+      "category": "Technology",
+      "createdAt": 1787668744848,
+      "dates": {
+        "created": 1787668744848
+      },
+      "description": "APEX is a legacy frontend tool and is not easy to make modifications to the user interface.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Sami",
+          "timestamp": 1787668744848,
+          "user": "Sami"
+        },
+        {
+          "action": "Edited",
+          "details": "Category: Process Improvement → Technology",
+          "timestamp": 1788419810825,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mt8rtbin1or2iwggx",
+      "priority": "Low",
+      "sortOrder": 70,
+      "status": "New",
+      "submittedBy": "Sami",
+      "title": "Use AI to generate an MQ estate database with a better frontend instead of APEX",
+      "updatedAt": 1788419810825,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtb6n6pahvr1jldre": {
+      "benefits": "It will help to save time which we use to fill in the checklists as well as redundancy can be removed.",
+      "category": "Process Improvement",
+      "createdAt": 1787814585262,
+      "dates": {
+        "created": 1787814585262,
+        "started": 1789636122772
+      },
+      "description": "We can create a page where all checklists can be saved. Also, the checklist shouldn't be a spreadsheet. It should be again a webpage. We can revisit the points we want to keep as things have changed on how we work and few points are just irrelevant now.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Riya Sharma",
+          "timestamp": 1787814585262,
+          "user": "Riya Sharma"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837594111,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1789636122772,
+          "user": "Riya Sharma"
+        }
+      ],
+      "id": "mtb6n6pahvr1jldre",
+      "priority": "Low",
+      "sortOrder": 90,
+      "status": "In Progress",
+      "submittedBy": "Riya Sharma",
+      "title": "MQ Design and Build Checklist - Improvement",
+      "updatedAt": 1789636122772,
+      "updatedBy": "Riya Sharma"
+    },
+    "mtbjpanpj3011gdn2": {
+      "benefits": "Saves 2+ hours per week on manual Excel rota creation. Zero allocation errors. Real-time visibility for all team members. Instant exports for management reporting. No manual handover needed during leave.",
+      "category": "Process Improvement",
+      "createdAt": 1787836518709,
+      "dates": {
+        "created": 1787836518709,
+        "inReview": 1787836549303,
+        "started": 1787836518709
+      },
+      "description": "Built a web-based Shift Rota Manager that auto-generates monthly rotas based on team rules, supports drag-and-click editing, shift swaps, CR duty assignment, and exports to Excel/PDF. Accessible by all team members via a single URL with role-based access.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1787836518709,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787836518709,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Priority: High → Medium",
+          "timestamp": 1787836538913,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → Review",
+          "timestamp": 1787836549303,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837439029,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtbjpanpj3011gdn2",
+      "priority": "Medium",
+      "sortOrder": 30,
+      "status": "Review",
+      "submittedBy": "Srinivas Ballem",
+      "title": "Support Shift Rota Management - Automation",
+      "updatedAt": 1787837439029,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtbjqn466wxtm7s19": {
+      "benefits": "Reduces weekly cadence preparation from 45 minutes to under 10 minutes. Consistent format every week. Full audit trail showing who updated what and when. No lost data between weeks. Accessible from anywhere.",
+      "category": "Process Improvement",
+      "createdAt": 1787836581510,
+      "dates": {
+        "created": 1787836581510,
+        "inReview": 1787836591238,
+        "started": 1787836581510
+      },
+      "description": "Created a digital cadence platform replacing manual PowerPoint preparation for Tuesday and Friday team updates. Structured forms for each section (Critical Issues, Delivery, Projects, Team Updates). Data auto-carries from previous weeks so only changes need updating. One-click export to PPT/PDF.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1787836581510,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787836581510,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → Review",
+          "timestamp": 1787836591238,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837355794,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1788971660402,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtbjqn466wxtm7s19",
+      "priority": "Medium",
+      "status": "Review",
+      "submittedBy": "Srinivas Ballem",
+      "title": "Middleware Weekly Cadence Slide Deck - Improvement",
+      "updatedAt": 1788971660402,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtbjriezgccrl3uzk": {
+      "benefits": "Eliminates manual on-call spreadsheet management. Fair and transparent rotation visible to all. One-click weekly assignment saves 30 minutes per week. No more confusion about who is on-call. Distribution stats prevent unfair loading on individuals.",
+      "category": "Process Improvement",
+      "createdAt": 1787836622075,
+      "dates": {
+        "created": 1787836622075,
+        "inReview": 1787836651782,
+        "started": 1787836640387
+      },
+      "description": "Built an automated on-call scheduling system with weekly Primary/Secondary/Tertiary assignment, quarter-ahead auto-generation, fair rotation algorithm, and real-time \"Who's on-call now\" dashboard. Distribution stats ensure fairness across the team.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1787836622075,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787836640387,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → Review",
+          "timestamp": 1787836651782,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837396076,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtbjriezgccrl3uzk",
+      "priority": "Medium",
+      "sortOrder": 20,
+      "status": "Review",
+      "submittedBy": "Srinivas Ballem",
+      "title": "Middleware Ops - On-Call Roster - Automation",
+      "updatedAt": 1787837396076,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtbjssceybia6fbfr": {
+      "benefits": "Complete transparency on TOIL balances for all team members. No more lost or forgotten hours. Managers can review balances at a glance. Audit trail for all changes. Reduces admin queries about TOIL entitlements.",
+      "category": "Process Improvement",
+      "createdAt": 1787836681598,
+      "dates": {
+        "completed": 1787838590285,
+        "created": 1787836681599,
+        "inReview": 1787838591648,
+        "started": 1787836681599
+      },
+      "description": "Built a monthly TOIL tracking dashboard showing OOH hours accrued, availed, and running balance for each team member. Supports inline editing, description fields for each entry, import from Excel, and export to Excel/PDF/CSV. Colour-coded balance indicators for quick visibility.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1787836681599,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787836681599,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "In Progress → Done",
+          "timestamp": 1787836763085,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "Done → Review",
+          "timestamp": 1787836925896,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837490316,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "Review → Done",
+          "timestamp": 1787838590285,
+          "user": "IAG"
+        },
+        {
+          "action": "Status changed",
+          "details": "Done → Review",
+          "timestamp": 1787838591648,
+          "user": "IAG"
+        }
+      ],
+      "id": "mtbjssceybia6fbfr",
+      "priority": "Medium",
+      "sortOrder": 40,
+      "status": "Review",
+      "submittedBy": "Srinivas Ballem",
+      "title": "Dashboard for tracking TOIL Hours - Improvement",
+      "updatedAt": 1787838591648,
+      "updatedBy": "IAG"
+    },
+    "mtbjtiysjbw81dd99": {
+      "benefits": "Reduces DD creation time from 1-2 hours to 15 minutes. Catches naming convention errors before submission to builders. Consistent output format across all designers. No dependency on legacy VBA macros. Import existing DDs from Excel for quick edits.",
+      "category": "Process Improvement",
+      "comments": [
+        {
+          "id": "muawm4cimjwsol794",
+          "text": "Await8ing for testing",
+          "timestamp": 1789974521731,
+          "user": "Srinivas Ballem"
+        }
+      ],
+      "createdAt": 1787836716100,
+      "dates": {
+        "created": 1787836716100,
+        "started": 1787836716100
+      },
+      "description": "Built a modern web-based MQ Detailed Design builder with header-aware validation, real-time error highlighting, multi-tab interface support, Excel import/export, and built-in BT MQ naming standard rules. Validates queue names, QM names, channel names against BT conventions automatically.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1787836716100,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1787836716100,
+          "user": "Srinivas Ballem"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1787837531954,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Comment added",
+          "details": "Await8ing for testing",
+          "timestamp": 1789974521731,
+          "user": "Srinivas Ballem"
+        }
+      ],
+      "id": "mtbjtiysjbw81dd99",
+      "priority": "High",
+      "sortOrder": 30,
+      "status": "In Progress",
+      "submittedBy": "Srinivas Ballem",
+      "title": "Create MQ Detailed Design - Automation",
+      "updatedAt": 1789974521731,
+      "updatedBy": "Srinivas Ballem"
+    },
+    "mtedv8kf5utmifdvw": {
+      "benefits": "",
+      "category": "Process Improvement",
+      "createdAt": 1788008116767,
+      "dates": {
+        "created": 1788008116767
+      },
+      "description": "Right now its in excel sheet.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Matcha Harsha Teja",
+          "timestamp": 1788008116767,
+          "user": "Matcha Harsha Teja"
+        }
+      ],
+      "id": "mtedv8kf5utmifdvw",
+      "priority": "Medium",
+      "sortOrder": 60,
+      "status": "New",
+      "submittedBy": "Matcha Harsha Teja",
+      "title": "CRCF Webpage creation",
+      "updatedAt": 1788008116767,
+      "updatedBy": "Matcha Harsha Teja"
+    },
+    "mtg17xdi27i5639va": {
+      "benefits": "Time & Effort, Process Improvements",
+      "category": "Team Culture",
+      "createdAt": 1788107806134,
+      "dates": {
+        "completed": 1788107806134,
+        "created": 1788107806134
+      },
+      "description": "Create a dashboard for capturing and progressing new ideas within the team",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1788107806134,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → Done",
+          "timestamp": 1788107806135,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtg17xdi27i5639va",
+      "priority": "High",
+      "sortOrder": 10,
+      "status": "Done",
+      "submittedBy": "Isaac Gera",
+      "title": "Creation of IdeaBoard",
+      "updatedAt": 1788107806134,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtn0w8rupxcnujlp0": {
+      "benefits": "Faster resolution time",
+      "category": "Technology",
+      "createdAt": 1788530524266,
+      "dates": {
+        "created": 1788530524266,
+        "started": 1790166730752
+      },
+      "description": "Automatically analyse logs, FDCs, dumps, queue depths and channel statuses and suggest prabable\nRoot cause.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1788530524267,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1790166730752,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtn0w8rupxcnujlp0",
+      "priority": "Medium",
+      "status": "In Progress",
+      "submittedBy": "Prasad Vempati",
+      "title": "Root Cause Analyser",
+      "updatedAt": 1790166807894,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtn0zdntu1jyim3za": {
+      "benefits": "Saves support effort",
+      "category": "Process Improvement",
+      "createdAt": 1788530670569,
+      "dates": {
+        "created": 1788530670569
+      },
+      "description": "Summarizes Incidents and generates post-incident reports",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1788530670569,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtn0zdntu1jyim3za",
+      "priority": "Medium",
+      "sortOrder": 40,
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Incidents Summarization",
+      "updatedAt": 1788530670569,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtn13j04kocy2lq0d": {
+      "benefits": "Streamlines project effort",
+      "category": "Process Improvement",
+      "createdAt": 1788530864116,
+      "dates": {
+        "created": 1788530864116
+      },
+      "description": "Assess upgrade compatibility & associated risks",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1788530864116,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mtn13j04kocy2lq0d",
+      "priority": "Medium",
+      "sortOrder": 30,
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Weblogic Upgrade Advisor",
+      "updatedAt": 1788530864116,
+      "updatedBy": "Isaac Gera"
+    },
+    "mtr74m4t29l5jih9z": {
+      "benefits": "The Patch Portal provides:\n Self-service downloads (no middleware involvement needed)\n Full audit trail (SC Task, App, Host, EIN, Date)\n Unique SC Task enforcement (no duplicate downloads)\nZero maintenance (just drop RPMs in a folder)\nRestricted to Openreach business only",
+      "category": "Process Improvement",
+      "createdAt": 1788782857229,
+      "dates": {
+        "created": 1788782857229,
+        "started": 1788782857229
+      },
+      "description": "OR WebLogic patch portal it is developed to simplify WebLogic patch distribution.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Anusha Ottigunta",
+          "timestamp": 1788782857229,
+          "user": "Anusha Ottigunta"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1788782857229,
+          "user": "Anusha Ottigunta"
+        }
+      ],
+      "id": "mtr74m4t29l5jih9z",
+      "priority": "Medium",
+      "sortOrder": 10,
+      "status": "In Progress",
+      "submittedBy": "Anusha Ottigunta",
+      "title": "OR WebLogic patch portal",
+      "updatedAt": 1788782857229,
+      "updatedBy": "Anusha Ottigunta"
+    },
+    "mu42vj0yjq2afzgse": {
+      "benefits": "Instant patch-level visibility across all middleware hosts in Dynatrace. Removes manual per-server checks and dependency on application teams. Makes patch compliance and monthly-patch tracking easy to filter and report.",
+      "category": "Process Improvement",
+      "createdAt": 1789561775122,
+      "dates": {
+        "created": 1789561775122,
+        "started": 1789561775122
+      },
+      "description": "A script that automatically detects WebLogic, SOA, and OSB patch levels on each host and publishes them to Dynatrace as host tags (e.g. WEBLOGIC_PATCH_LEVEL_14_1_1_0 = 14.1.1.0.Apr2026). Runs via the existing OneAgent, so no separate access or connectivity between servers is needed.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Anusha Ottigunta",
+          "timestamp": 1789561775122,
+          "user": "Anusha Ottigunta"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1789561775122,
+          "user": "Anusha Ottigunta"
+        },
+        {
+          "action": "Edited",
+          "details": "Priority: Low → Medium",
+          "timestamp": 1789562210976,
+          "user": "Anusha Ottigunta"
+        }
+      ],
+      "id": "mu42vj0yjq2afzgse",
+      "priority": "Medium",
+      "sortOrder": 50,
+      "status": "In Progress",
+      "submittedBy": "Anusha Ottigunta",
+      "title": "WebLogic/SOA/OSB Patch Level to Dynatraces",
+      "updatedAt": 1789562210976,
+      "updatedBy": "Anusha Ottigunta"
+    },
+    "mu42w3cxducrvbya1": {
+      "benefits": "Zero-touch: no new agents, no server credentials, no downtime.\nNear real-time and repeatable, not a one-off manual audit.\nFoundation for downstream work: end-of-life version tracking, patch-compliance reporting, upgrade planning.",
+      "category": "Process Improvement",
+      "createdAt": 1789561801473,
+      "dates": {
+        "created": 1789561801473,
+        "started": 1789561934956
+      },
+      "description": "Use the existing Dynatrace OneAgent already running on all OR servers to automatically discover and report every WebLogic Server installation and its version, with zero additional agents or manual server logins.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by VeeraNagireddy",
+          "timestamp": 1789561801473,
+          "user": "VeeraNagireddy"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1789561934956,
+          "user": "VeeraNagireddy"
+        }
+      ],
+      "id": "mu42w3cxducrvbya1",
+      "priority": "Medium",
+      "sortOrder": 40,
+      "status": "In Progress",
+      "submittedBy": "Nagireddy",
+      "title": "DT WebLogic Census",
+      "updatedAt": 1789561963570,
+      "updatedBy": "VeeraNagireddy"
+    },
+    "mu59y84qig0ngf0g2": {
+      "benefits": "The benefit is to have a single source of truth for application designs, making it easier for architects, developers, support teams, and other stakeholders to understand existing applications, explore dependencies, and find design information quickly without searching across multiple documents or repositories.",
+      "category": "Process Improvement",
+      "comments": [
+        {
+          "id": "mudz0yy53bpq1pgzk",
+          "text": "Riya have started working on this. Moving to In Progress",
+          "timestamp": 1790159972333,
+          "user": "Fasin Ashker"
+        }
+      ],
+      "createdAt": 1789634124458,
+      "dates": {
+        "created": 1789634124458,
+        "started": 1790159988460
+      },
+      "description": "Design360 is a centralized dashboard to discover and view application architecture and design information using Application Name or App ID.\nThe dashboard will provide a 360° view of an application, allowing users to quickly access both High-Level Design (HLD) and Detailed Design (LLD), along with relevant architecture, components, interfaces, dependencies, data flows, and other technical details.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Fasin Ashker",
+          "timestamp": 1789634124458,
+          "user": "Fasin Ashker"
+        },
+        {
+          "action": "Comment added",
+          "details": "Riya have started working on this. Moving to In Pr...",
+          "timestamp": 1790159972333,
+          "user": "Fasin Ashker"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1790159988460,
+          "user": "Fasin Ashker"
+        }
+      ],
+      "id": "mu59y84qig0ngf0g2",
+      "priority": "Medium",
+      "sortOrder": 80,
+      "status": "In Progress",
+      "submittedBy": "Fasin Ashker",
+      "title": "Design360 Dashboard",
+      "updatedAt": 1790159988460,
+      "updatedBy": "Fasin Ashker"
+    },
+    "muasb12y4p0hiz9sw": {
+      "benefits": "",
+      "category": "Technology",
+      "createdAt": 1789967285818,
+      "dates": {
+        "created": 1789967285818
+      },
+      "description": "Autodeployment of weblogic and wildfly domains through a centralized platform.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Prasanth J",
+          "timestamp": 1789967285818,
+          "user": "Prasanth J"
+        }
+      ],
+      "id": "muasb12y4p0hiz9sw",
+      "priority": "Low",
+      "sortOrder": 130,
+      "status": "New",
+      "submittedBy": "Prasanth J",
+      "title": "WOLF (WebLogic & WildFly Operations and Lifecycle Framework)",
+      "updatedAt": 1789967285818,
+      "updatedBy": "Prasanth J"
+    },
+    "mucngkm6jcorbns7z": {
+      "benefits": "",
+      "category": "Process Improvement",
+      "createdAt": 1790080078686,
+      "dates": {
+        "created": 1790080078686
+      },
+      "description": "Integrate ServiceNow with Internal tools for fetching data/reports/summaries",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Vidya Mahale",
+          "timestamp": 1790080078686,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mucngkm6jcorbns7z",
+      "priority": "Medium",
+      "sortOrder": 110,
+      "status": "New",
+      "submittedBy": "Vidya Mahale",
+      "title": "ServiceNow Integration",
+      "updatedAt": 1790080078686,
+      "updatedBy": "Isaac Gera"
+    },
+    "mucnl7wc3go35ttm9": {
+      "benefits": "Doing away with Excel Spreadsheets and having a central dashboard",
+      "category": "Process Improvement",
+      "createdAt": 1790080295484,
+      "dates": {
+        "created": 1790080295484
+      },
+      "description": "Create a simple central tool / dashboard based on the approved Menu Card for components like MQ, WLS, CFT, Wildfly to estimate the costs/effort for the requirements coming into Delivery team.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1790080295484,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1790182634554,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mucnl7wc3go35ttm9",
+      "priority": "Low",
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Middleware Delivery - Cost / Effort Estimation",
+      "updatedAt": 1790182634554,
+      "updatedBy": "Isaac Gera"
+    },
+    "mucnoxfqcl9f189hk": {
+      "benefits": "",
+      "category": "Process Improvement",
+      "createdAt": 1790080468550,
+      "dates": {
+        "created": 1790080468550
+      },
+      "description": "Create a dashboard view for weekly / monthly / quarterly / Yearly cost recovery for the middleware components - MQ, WLS, CFT & WildFly.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Isaac Gera",
+          "timestamp": 1790080468550,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1790080488317,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Edited",
+          "details": "Title",
+          "timestamp": 1790182587384,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mucnoxfqcl9f189hk",
+      "priority": "Low",
+      "status": "New",
+      "submittedBy": "Isaac Gera",
+      "title": "Middleware Delivery - Revenue / Cost Recovery Dashboard",
+      "updatedAt": 1790182587384,
+      "updatedBy": "Isaac Gera"
+    },
+    "mucnv7pky2i947z0f": {
+      "benefits": "Do away with the Legacy and Problematic Omegamon tool",
+      "category": "Technology",
+      "createdAt": 1790080761800,
+      "dates": {
+        "created": 1790080761800,
+        "started": 1790166613326
+      },
+      "description": "As on alternative to existing Omegamon, develop an agent / tool that can help monitor MQ objects, collect stats and trigger alerts to the support team.",
+      "history": [
+        {
+          "action": "Created",
+          "details": "Idea submitted by Srinivas Ballem",
+          "timestamp": 1790080761800,
+          "user": "Isaac Gera"
+        },
+        {
+          "action": "Status changed",
+          "details": "New → In Progress",
+          "timestamp": 1790166613326,
+          "user": "Isaac Gera"
+        }
+      ],
+      "id": "mucnv7pky2i947z0f",
+      "priority": "High",
+      "sortOrder": 70,
+      "status": "In Progress",
+      "submittedBy": "Srinivas Ballem",
+      "title": "MQ Monitoring & Statistics",
+      "updatedAt": 1790166613326,
+      "updatedBy": "Isaac Gera"
+    }
+  },
+  "users": {
+    "entra_f38d16ae-a957-40c9-8c7c-09d2f6239e32": {
+      "lastSeen": 1789152954752,
+      "name": "Srinivas Ballem (QVB C)",
+      "role": "contributor"
+    },
+    "local_harsha_matcha": {
+      "lastSeen": 1789972877194,
+      "name": "Harsha Matcha",
+      "role": "contributor"
+    },
+    "local_isaac_gera": {
+      "lastSeen": 1790182565060,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "local_prasanth_j": {
+      "lastSeen": 1790053103482,
+      "name": "Prasanth J",
+      "role": "contributor"
+    },
+    "local_shilpa_puttasiddappagari_s": {
+      "lastSeen": 1790157760972,
+      "name": "Shilpa Puttasiddappagari S",
+      "role": "contributor"
+    },
+    "local_srinivas_ballem": {
+      "lastSeen": 1789995041710,
+      "name": "Srinivas Ballem",
+      "role": "contributor"
+    },
+    "local_veeranagireddy": {
+      "lastSeen": 1789984674117,
+      "name": "VeeraNagireddy",
+      "role": "contributor"
+    },
+    "mt7m3bv6lwlszj8ns": {
+      "lastSeen": 1789991091974,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mt89aski9ndmleesa": {
+      "lastSeen": 1787637665256,
+      "name": "Isaac Gera",
+      "role": "contributor"
+    },
+    "mt89hko6g6drtpr6r": {
+      "lastSeen": 1788180045504,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mt8ekusv1szrf97a6": {
+      "lastSeen": 1787651462769,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mt8jrh6lc8lktfs72": {
+      "lastSeen": 1787671899237,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mt8qdo5feixerxjb3": {
+      "lastSeen": 1788345627310,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mt8r206k9yygmsq3f": {
+      "lastSeen": 1788264408084,
+      "name": "Sami",
+      "role": "contributor"
+    },
+    "mtb6hk35tsi3ea19h": {
+      "lastSeen": 1787814322680,
+      "name": "Riya Sharma",
+      "role": "contributor"
+    },
+    "mtb6i18o0p5d0tdti": {
+      "lastSeen": 1789710597464,
+      "name": "Riya Sharma",
+      "role": "contributor"
+    },
+    "mtb6pxrauwmnns2wp": {
+      "lastSeen": 1790159936025,
+      "name": "Fasin Ashker",
+      "role": "contributor"
+    },
+    "mtbfwb1a3lknbxakn": {
+      "lastSeen": 1787830127344,
+      "name": "Srinivas Ballem",
+      "role": "contributor"
+    },
+    "mtbfx0nk334lpdk9x": {
+      "lastSeen": 1787830160538,
+      "name": "Srinivas Ballem",
+      "role": "contributor"
+    },
+    "mtcqazcyd5ee9ipd5": {
+      "lastSeen": 1787915874924,
+      "name": "Yogesh Anil Kumar Annavarapu",
+      "role": "contributor"
+    },
+    "mtcqgmqhkyjnltd3r": {
+      "lastSeen": 1788953916348,
+      "name": "Asha",
+      "role": "contributor"
+    },
+    "mtcuz02oebcuntaf7": {
+      "lastSeen": 1788165451481,
+      "name": "Matcha Harsha Teja",
+      "role": "contributor"
+    },
+    "mtcwr5p4o4ywc2k6k": {
+      "lastSeen": 1789732568337,
+      "name": "Rajasekhar Reddy",
+      "role": "contributor"
+    },
+    "mtikfs6v0s89zcg6k": {
+      "lastSeen": 1788350539172,
+      "name": "Sonal Chauhan",
+      "role": "contributor"
+    },
+    "mtk1qh5c07uoa44hq": {
+      "lastSeen": 1788446560840,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlmf2tdcg99un00a": {
+      "lastSeen": 1788449775483,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlou8knj0nz5z2o9": {
+      "lastSeen": 1788452658531,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlqg4qhqsbe0klzc": {
+      "lastSeen": 1788452510213,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlqjvslpxrek29jo": {
+      "lastSeen": 1788453034172,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlqu5eyfud14khj6": {
+      "lastSeen": 1788455065340,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlr5ehjcrh8p9v7l": {
+      "lastSeen": 1788455689115,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlry1lnj106yg14m": {
+      "lastSeen": 1788455746285,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlsfwsb0kcao78jm": {
+      "lastSeen": 1788456109862,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlsl1a0nhy32a31y": {
+      "lastSeen": 1788456098248,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtlsmf5s1kjol13aj": {
+      "lastSeen": 1788533526261,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtmuhly24wdo88647": {
+      "lastSeen": 1788519763811,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtmuijn3bcynym3l4": {
+      "lastSeen": 1788533666917,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtmxr22sispwh288h": {
+      "lastSeen": 1790134762757,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtn0xwdjcfb3tnu6w": {
+      "lastSeen": 1788530601521,
+      "name": "Mukesh Jorrigala",
+      "role": "contributor"
+    },
+    "mtn373byi4j3w5dd9": {
+      "lastSeen": 1788534389674,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtnepq5zim77vm78x": {
+      "lastSeen": 1788553734854,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtpwbdzw38h2o1kxj": {
+      "lastSeen": 1788704231334,
+      "name": "ISAAC GERA",
+      "role": "admin"
+    },
+    "mtqspes3igfuhqff3": {
+      "lastSeen": 1788782703534,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtr71kkzl3pbacx58": {
+      "lastSeen": 1789721912113,
+      "name": "Anusha Ottigunta",
+      "role": "contributor"
+    },
+    "mtr72045ir06e66mm": {
+      "lastSeen": 1788782735386,
+      "name": "Harsha Matcha",
+      "role": "contributor"
+    },
+    "mtrcjfzo6krwvd8ju": {
+      "lastSeen": 1788791947204,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtrfomkh62xpp1o95": {
+      "lastSeen": 1788797227849,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtu0hntg37wnbqqmn": {
+      "lastSeen": 1789150929949,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtx7j6emp6dn0ratu": {
+      "lastSeen": 1789146333755,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mtxbqrsjdsdc3uh06": {
+      "lastSeen": 1789153406525,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mu28dxorhazp7wf96": {
+      "lastSeen": 1789450099672,
+      "name": "Isaac Gera",
+      "role": "admin"
+    },
+    "mu2flkyg46c621no5": {
+      "lastSeen": 1789462571334,
+      "name": "Isaac Gera",
+      "role": "admin"
+    }
+  }
+}

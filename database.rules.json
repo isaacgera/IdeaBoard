@@ -1,0 +1,10 @@
+{
+  "//": "Idea Board — Firebase Realtime Database security rules (version-controlled copy).",
+  "//__source": "The authoritative rules live in the Firebase console (project ideaboard-iag-2026) > Realtime Database > Rules. This file documents them so they are not invisible to the repo. To change the live rules, edit here AND publish in the console (or deploy via Firebase CLI).",
+  "//__history": "24 Sep 2026: the original test-mode rules (\".read\"/\".write\": \"now < 1790188200000\") expired at their built-in 30-day cutoff (24 Sep 2026). Every unauthenticated request then returned 401 Unauthorized, so the app could no longer read /ideas and the board rendered blank. Data was confirmed intact in the Data tab. Rules replaced with the open rules below to restore the pre-expiry behaviour (same open posture the app already relied on).",
+  "//__security_note": "These rules are fully open: anyone who knows the database URL can read and write it directly. Mitigated only by the board being served behind the team's SAML/GitLab access. Locking this down properly (Firebase Auth + auth-scoped rules) is a separate parked project — it requires wiring Firebase Authentication into the app, which the live app does NOT currently do. See SESSION-LOG.md and SPEC-tasks.md.",
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}
