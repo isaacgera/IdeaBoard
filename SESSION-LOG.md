@@ -1347,3 +1347,22 @@ then the deliberate one-pass port. Ideas.md row flipped to **In Progress** at th
 - Session closed. Carried-forward (unchanged): TASK-02 v3-modular parity port (still frozen
   ~v2.3; treat as a Spec when picked up); the `prototypes/a11y-ux/` folder stays as the
   reference for this release.
+
+### Session 13 — Addendum 3 (same session): prototype folder + wrap-up committed & synced
+- GitHub Desktop showed 13 uncommitted files, all under `prototypes/a11y-ux/`. Checked
+  `git status`: the **live v2.5.0 release was already committed + pushed** (root files on
+  `main` across all three remotes — that's why the live sites/PWA were correct); the only
+  outstanding items were the untracked `prototypes/a11y-ux/` folder and the modified
+  `SESSION-LOG.md` (the post-push addenda).
+- Committed all of it — `git commit e163281` "Add a11y-ux prototype (v2.5.0 reference) +
+  session log wrap-up" (13 files: the 12 prototype files + SESSION-LOG.md). Ran `git pushall`;
+  Isaac confirmed all three remotes' `main` are in sync on `e163281`.
+- This commit is **reference/docs only** (the prototype folder + log) — it does not change the
+  deployed live app, which remains v2.5.0.
+- Expected/benign: GitHub Desktop shows "Push origin 1↑" against `origin/master` — that's the
+  known `master`-vs-`main` branch drift (Session 10 Addendum 3); Pages builds from `main`
+  everywhere, and the remotes' `master` is a stale leftover nothing depends on. Not a failed push.
+- LF→CRLF line-ending warnings on the committed files are cosmetic (Windows checkout). Optional
+  future tidy: a `.gitattributes` (`* text=auto eol=lf`) to silence them.
+
+**Session 13 fully closed. Everything committed and synced across origin/team/github; live app v2.5.0; backlog Built (Idea Board v2.5.0).**
